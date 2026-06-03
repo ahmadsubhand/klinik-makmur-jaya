@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\MedicineBatchController;
 use App\Http\Controllers\Admin\MedicineController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SystemMonitorController;
@@ -31,13 +32,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
         // ========================================================
-        // UC2: MANAJEMEN OBAT DAN KATEGORI (SUPER ADMIN ONLY)
+        // UC2: MANAJEMEN OBAT DAN KATEGORI
         // Akses: Admin, Apoteker
         // ========================================================
         Route::middleware(['auth', 'role:admin|pharmacist'])->group(function () {
             Route::resource('categories', CategoryController::class)->except(['create', 'edit']);
             Route::resource('suppliers', SupplierController::class)->except(['create', 'edit']);
             Route::resource('medicines', MedicineController::class)->except(['create', 'edit']);
+            Route::resource('medicine-batches', MedicineBatchController::class)->except(['create', 'edit']);
         });
     });
 });

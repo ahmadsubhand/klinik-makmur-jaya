@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Activity, BookOpen, FolderGit2, LayoutGrid, Pill, Tags, Truck, Users } from 'lucide-react';
+import { Activity, BookOpen, FolderGit2, LayoutGrid, Package, Pill, Tags, Truck, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -51,16 +51,19 @@ export function AppSidebar() {
             icon: LayoutGrid,
         },
 
-        // --- PENGATURAN SISTEM (Hanya Admin) ---
+        // --- MANAJEMEN OBAT DAN KATEGORI ---
         ...(hasAnyRole(['admin', 'pharmacist']) ? [
             { title: 'Kategori', href: '/admin/categories', icon: Tags },
             { title: 'Supplier', href: '/admin/suppliers', icon: Truck },
             { title: 'Obat', href: '/admin/medicines', icon: Pill },
+            { title: 'Batch Obat', href: '/admin/medicine-batches', icon: Package },
         ] : []),
 
-        // --- PENGATURAN SISTEM (Hanya Admin) ---
         ...(hasAnyRole(['admin']) ? [
-            { title: 'Kelola Pengguna', href: '/admin/users', icon: Users },
+          // --- MANAJEMEN PENGGUNA ---
+          { title: 'Kelola Pengguna', href: '/admin/users', icon: Users },
+
+          // --- MEMANTAU SERVER & LOG ---
             { title: 'System Monitor', href: '/admin/system-monitor', icon: Activity },
         ] : []),
     ];
