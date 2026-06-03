@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Activity, BookOpen, FolderGit2, LayoutGrid, Users } from 'lucide-react';
+import { Activity, BookOpen, FolderGit2, LayoutGrid, Pill, Tags, Truck, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -50,6 +50,13 @@ export function AppSidebar() {
             href: dashboard(),
             icon: LayoutGrid,
         },
+
+        // --- PENGATURAN SISTEM (Hanya Admin) ---
+        ...(hasAnyRole(['admin', 'pharmacist']) ? [
+            { title: 'Kategori', href: '/admin/categories', icon: Tags },
+            { title: 'Supplier', href: '/admin/suppliers', icon: Truck },
+            { title: 'Obat', href: '/admin/medicines', icon: Pill },
+        ] : []),
 
         // --- PENGATURAN SISTEM (Hanya Admin) ---
         ...(hasAnyRole(['admin']) ? [

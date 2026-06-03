@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\MedicineController;
+use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SystemMonitorController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
@@ -11,7 +14,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
         // ========================================================
-        // UC1: MANAJEMEN PENGGUNA (SUPER ADMIN ONLY)
+        // UC1: MANAJEMEN PENGGUNA
         // Akses: Admin
         // ========================================================
         Route::middleware(['role:admin'])->group(function () {
@@ -24,6 +27,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Akses: Admin
             // ========================================================
             Route::get('/system-monitor', [SystemMonitorController::class, 'index'])->name('system.monitor');
+        });
+
+
+        // ========================================================
+        // UC2: MANAJEMEN OBAT DAN KATEGORI (SUPER ADMIN ONLY)
+        // Akses: Admin, Apoteker
+        // ========================================================
+        Route::middleware(['auth', 'role:admin|pharmacist'])->group(function () {
+            Route::resource('categories', CategoryController::class)->except(['create', 'edit']);
+            Route::resource('suppliers', SupplierController::class)->except(['create', 'edit']);
+            Route::resource('medicines', MedicineController::class)->except(['create', 'edit']);
         });
     });
 });
