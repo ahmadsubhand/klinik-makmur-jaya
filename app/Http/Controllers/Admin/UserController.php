@@ -80,8 +80,17 @@ class UserController extends Controller
             return redirect()->back()->with('error', 'Hanya Super Admin yang berhak mendaftarkan user menjadi Admin.');
         }
 
+        // Ambil Role ID lama untuk keperluan Audit Log
+        $oldRole = DB::table('model_has_roles')
+            ->where('model_id', $user->id)
+            ->where('model_type', User::class)
+            ->first();
+        
+        $oldRoleId = $oldRole ? $oldRole->role_id : null;
+        $newRoleId = $validated['role_id'];
+
         // Update Data menggunakan Transaksi
-        DB::transaction(function () use ($user, $validated) {
+        DB::transaction(function () use ($user, $validated, $oldRoleId, $newRoleId) {
             // Update Role: Hapus role lama, pasang role baru
             DB::table('model_has_roles')
                 ->where('model_id', $user->id)
@@ -93,6 +102,14 @@ class UserController extends Controller
                 'model_type' => User::class,
                 'model_id' => $user->id,
             ]);
+
+            if ($oldRoleId != $newRoleId) {
+                $user->logAudit(
+                    'updated',
+                    ['role_id' => $oldRoleId], 
+                    ['role_id' => $newRoleId]
+                );
+            }
         });
 
         return redirect()->back()->with('success', 'Data pengguna berhasil diperbarui.');

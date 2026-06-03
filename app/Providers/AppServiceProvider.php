@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +25,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        LogViewer::auth(function ($request) {
+            // Hanya izinkan jika user sudah login dan merupakan Super Admin (ID 1)
+            return $request->user() && $request->user()->id === 1; 
+        });
     }
 
     /**

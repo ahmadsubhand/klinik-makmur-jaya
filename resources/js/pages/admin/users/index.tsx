@@ -83,7 +83,7 @@ export default function UserIndex({
   roles: Role[];
   filters: Filters;
 }) {
-  const { auth } = usePage().props;
+  const { auth } = usePage<{ auth: { user: User }}>().props;
   const isSuperAdmin = auth.user.id === 1;
 
   // --- FILTER & SORTING STATE ---

@@ -93,6 +93,8 @@ flowchart TD
 
 3. **barryvdh/laravel-dompdf v3.x**: Lisensi MIT. Digunakan untuk mengonversi tampilan laporan visual penjualan (Blade/HTML View) menjadi format dokumen PDF resmi berlogo klinik.
 
+4. **opcodesio/log-viewer v3.x**: Lisensi MIT. Digunakan untuk menyediakan dashboard visual analisis log aplikasi Laravel secara real-time.
+
 ---
 
 ## 3.2 Rancangan Basis Data

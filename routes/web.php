@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\SystemMonitorController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,11 +14,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // UC1: MANAJEMEN PENGGUNA (SUPER ADMIN ONLY)
         // Akses: Admin
         // ========================================================
-        // 1. SUPER ADMIN ONLY (Kelola Pengguna)
         Route::middleware(['role:admin'])->group(function () {
             Route::get('/users', [UserController::class, 'index'])->name('users.index');
             Route::post('/users/{user}/change-role', [UserController::class, 'changeRole'])->name('users.change-role');
             Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+             // ========================================================
+            // UC8: MEMANTAU SERVER & LOG
+            // Akses: Admin
+            // ========================================================
+            Route::get('/system-monitor', [SystemMonitorController::class, 'index'])->name('system.monitor');
         });
     });
 });
