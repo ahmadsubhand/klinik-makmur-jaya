@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SystemMonitorController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\PrescriptionController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ShopController;
@@ -63,6 +64,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // ========================================================
             Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
             Route::put('/prescriptions/{prescription}', [PrescriptionController::class, 'update'])->name('prescriptions.update');
+
+            // ========================================================
+            // UC7: IMPORT AND EXPORT DATA
+            // ========================================================
+            Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+            Route::post('/reports/request-pdf', [ReportController::class, 'requestPdf'])->name('reports.pdf');
+            Route::post('/reports/import-csv', [ReportController::class, 'importCsv'])->name('reports.csv');
+            Route::get('/reports/template-csv', [ReportController::class, 'downloadCsvTemplate'])->name('reports.template-csv');
         });
 
         // ========================================================

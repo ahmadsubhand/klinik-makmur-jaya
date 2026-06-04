@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Activity, BookOpen, FileCheck, FolderGit2, LayoutGrid, Package, Pill, ShoppingBag, Tags, Truck, Users, Computer, BarChart } from 'lucide-react';
+import { Activity, BookOpen, FileCheck, FolderGit2, LayoutGrid, Package, Pill, ShoppingBag, Tags, Truck, Users, Computer, BarChart, UploadCloud } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -59,6 +59,7 @@ export function AppSidebar() {
             { title: 'Batch Obat', href: '/admin/medicine-batches', icon: Package },
             { title: 'Validasi Resep', href: '/admin/prescriptions', icon: FileCheck },
             { title: 'Pesanan', href: '/admin/orders', icon: ShoppingBag },
+            { title: 'Upload/Download', href: '/admin/reports', icon: UploadCloud },
         ] : []),
 
         // --- MANAJEMEN OBAT DAN KATEGORI ---
