@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import NotificationBell from '../../components/notification-bell';
 
 interface Category { id: number; name: string; }
 interface Medicine {
@@ -99,6 +100,8 @@ export default function ShopIndex({
               <ShoppingCart className="h-4 w-4" />
               Lihat Keranjang
             </Button>
+
+            <NotificationBell />
           </div>
         </div>
 

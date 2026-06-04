@@ -15,6 +15,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\UserOrderController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -39,7 +40,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // ========================================================
             // UC8: DASHBOARD REAL-TIME
             // ========================================================
-            Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         });
 
 
@@ -104,6 +105,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{order}/payment', [UserOrderController::class, 'uploadPaymentProof'])->name('payment');
     });
 
+    Route::get('/notifications', function () {
+        return response()->json(Auth::user()->unreadNotifications);
+    })->name('notifications.index');
+
+    Route::post('/notifications/mark-as-read', function () {
+        Auth::user()->unreadNotifications->markAsRead();
+        return response()->json(['success' => true]);
+    })->name('notifications.markAllRead');
 });
 
 // ========================================================

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
+use App\Notifications\OrderStatusUpdated;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -36,7 +37,12 @@ class OrderController extends Controller
 
         $order->update(['status' => $validated['status']]);
 
-        return back()->with('success', 'Status pesanan berhasil diperbarui.');
+        // KIRIM NOTIFIKASI KE PASIEN JIKA TRANSAKSI ONLINE DAN PASIEN TERDAFTAR
+        if ($order->type === 'online' && $order->patient) {
+            $order->patient->notify(new OrderStatusUpdated($order));
+        }
+
+        return back()->with('success', 'Status pesanan berhasil diperbarui dan notifikasi email telah dikirim ke pasien.');
     }
 
     public function verifyPayment(Transaction $order)
