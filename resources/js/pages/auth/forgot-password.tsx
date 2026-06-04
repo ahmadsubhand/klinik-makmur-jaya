@@ -1,4 +1,3 @@
-// Components
 import { Form, Head } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import InputError from '@/components/input-error';
@@ -12,10 +11,10 @@ import { email } from '@/routes/password';
 export default function ForgotPassword({ status }: { status?: string }) {
     return (
         <>
-            <Head title="Forgot password" />
+            <Head title="Lupa Kata Sandi" />
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div className="mb-4 text-center text-sm font-medium text-emerald-600 bg-emerald-50 p-3 rounded-lg border border-emerald-100">
                     {status}
                 </div>
             )}
@@ -25,7 +24,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email" className="text-slate-700">Alamat Email</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -33,6 +32,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     autoComplete="off"
                                     autoFocus
                                     placeholder="email@example.com"
+                                    className="focus-visible:ring-emerald-500"
                                 />
 
                                 <InputError message={errors.email} />
@@ -40,23 +40,28 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                             <div className="my-6 flex items-center justify-start">
                                 <Button
-                                    className="w-full"
+                                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
                                 >
                                     {processing && (
-                                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                                     )}
-                                    Email password reset link
+                                    Kirim Tautan Pemulihan
                                 </Button>
                             </div>
                         </>
                     )}
                 </Form>
 
-                <div className="space-x-1 text-center text-sm text-muted-foreground">
-                    <span>Or, return to</span>
-                    <TextLink href={login()}>log in</TextLink>
+                <div className="space-x-1 text-center text-sm text-slate-500">
+                    <span>Atau, kembali ke halaman</span>
+                    <TextLink 
+                        href={login()}
+                        className="text-emerald-600 hover:text-emerald-700 font-semibold"
+                    >
+                        Masuk
+                    </TextLink>
                 </div>
             </div>
         </>
@@ -64,6 +69,6 @@ export default function ForgotPassword({ status }: { status?: string }) {
 }
 
 ForgotPassword.layout = {
-    title: 'Forgot password',
-    description: 'Enter your email to receive a password reset link',
+    title: 'Lupa Kata Sandi',
+    description: 'Masukkan alamat email Anda untuk menerima tautan pemulihan kata sandi akun Makmur Jaya.',
 };

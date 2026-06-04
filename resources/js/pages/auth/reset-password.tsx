@@ -16,7 +16,7 @@ type Props = {
 export default function ResetPassword({ token, email, passwordRules }: Props) {
     return (
         <>
-            <Head title="Reset password" />
+            <Head title="Atur Ulang Kata Sandi" />
 
             <Form
                 {...update.form()}
@@ -26,14 +26,14 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                 {({ processing, errors }) => (
                     <div className="grid gap-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="email" className="text-slate-700">Alamat Email</Label>
                             <Input
                                 id="email"
                                 type="email"
                                 name="email"
                                 autoComplete="email"
                                 value={email}
-                                className="mt-1 block w-full"
+                                className="mt-1 block w-full bg-slate-50 text-slate-500 cursor-not-allowed focus-visible:ring-emerald-500"
                                 readOnly
                             />
                             <InputError
@@ -43,29 +43,29 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password" className="text-slate-700">Kata Sandi Baru</Label>
                             <PasswordInput
                                 id="password"
                                 name="password"
                                 autoComplete="new-password"
-                                className="mt-1 block w-full"
+                                className="mt-1 block w-full focus-visible:ring-emerald-500"
                                 autoFocus
-                                placeholder="Password"
+                                placeholder="••••••••"
                                 passwordrules={passwordRules}
                             />
                             <InputError message={errors.password} />
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">
-                                Confirm password
+                            <Label htmlFor="password_confirmation" className="text-slate-700">
+                                Konfirmasi Kata Sandi Baru
                             </Label>
                             <PasswordInput
                                 id="password_confirmation"
                                 name="password_confirmation"
                                 autoComplete="new-password"
-                                className="mt-1 block w-full"
-                                placeholder="Confirm password"
+                                className="mt-1 block w-full focus-visible:ring-emerald-500"
+                                placeholder="••••••••"
                                 passwordrules={passwordRules}
                             />
                             <InputError
@@ -76,12 +76,12 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
 
                         <Button
                             type="submit"
-                            className="mt-4 w-full"
+                            className="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
                             disabled={processing}
                             data-test="reset-password-button"
                         >
-                            {processing && <Spinner />}
-                            Reset password
+                            {processing && <Spinner className="mr-2 h-4 w-4" />}
+                            Simpan Kata Sandi Baru
                         </Button>
                     </div>
                 )}
@@ -91,6 +91,6 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
 }
 
 ResetPassword.layout = {
-    title: 'Reset password',
-    description: 'Please enter your new password below',
+    title: 'Atur Ulang Kata Sandi',
+    description: 'Silakan masukkan kata sandi baru Anda di bawah ini untuk memulihkan akses akun.',
 };

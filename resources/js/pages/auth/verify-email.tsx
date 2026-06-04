@@ -9,28 +9,30 @@ import { send } from '@/routes/verification';
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
         <>
-            <Head title="Email verification" />
+            <Head title="Verifikasi Email" />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
+                <div className="mb-6 text-center text-sm font-medium text-emerald-600 bg-emerald-50 p-4 rounded-lg border border-emerald-100">
+                    Tautan verifikasi baru telah dikirimkan ke alamat email yang Anda berikan saat pendaftaran.
                 </div>
             )}
 
             <Form {...send.form()} className="space-y-6 text-center">
                 {({ processing }) => (
                     <>
-                        <Button disabled={processing} variant="secondary">
-                            {processing && <Spinner />}
-                            Resend verification email
+                        <Button 
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
+                            disabled={processing} 
+                        >
+                            {processing && <Spinner className="mr-2 h-4 w-4" />}
+                            Kirim Ulang Email Verifikasi
                         </Button>
 
                         <TextLink
                             href={logout()}
-                            className="mx-auto block text-sm"
+                            className="mx-auto block text-sm text-slate-500 hover:text-emerald-700 font-medium transition-colors"
                         >
-                            Log out
+                            Keluar Akun
                         </TextLink>
                     </>
                 )}
@@ -40,7 +42,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
 }
 
 VerifyEmail.layout = {
-    title: 'Email verification',
+    title: 'Verifikasi Email',
     description:
-        'Please verify your email address by clicking on the link we just emailed to you.',
+        'Terima kasih telah mendaftar! Sebelum memulai akses layanan, harap verifikasi alamat email Anda dengan mengeklik tautan yang baru saja kami kirimkan.',
 };
