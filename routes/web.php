@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MedicineBatchController;
 use App\Http\Controllers\Admin\MedicineController;
 use App\Http\Controllers\Admin\OrderController;
@@ -29,10 +30,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/users/{user}/change-role', [UserController::class, 'changeRole'])->name('users.change-role');
             Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
-             // ========================================================
+            // ========================================================
             // UC8: MEMANTAU SERVER & LOG
             // ========================================================
             Route::get('/system-monitor', [SystemMonitorController::class, 'index'])->name('system.monitor');
+
+            // ========================================================
+            // UC8: DASHBOARD REAL-TIME
+            // ========================================================
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
         });
 
 

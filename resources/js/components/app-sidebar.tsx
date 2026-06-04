@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Activity, BookOpen, FileCheck, FolderGit2, LayoutGrid, Package, Pill, ShoppingBag, Tags, Truck, Users, Computer } from 'lucide-react';
+import { Activity, BookOpen, FileCheck, FolderGit2, LayoutGrid, Package, Pill, ShoppingBag, Tags, Truck, Users, Computer, BarChart } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -67,11 +67,14 @@ export function AppSidebar() {
         ] : []),
 
         ...(hasAnyRole(['admin']) ? [
+          // --- DASHBOARD REALTIME ---
+          { title: 'Dashboard Admin', href: '/admin/dashboard', icon: BarChart },
+
           // --- MANAJEMEN PENGGUNA ---
           { title: 'Kelola Pengguna', href: '/admin/users', icon: Users },
 
           // --- MEMANTAU SERVER & LOG ---
-            { title: 'System Monitor', href: '/admin/system-monitor', icon: Activity },
+          { title: 'System Monitor', href: '/admin/system-monitor', icon: Activity },
         ] : []),
     ];
 
