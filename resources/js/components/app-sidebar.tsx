@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Activity, BookOpen, FileCheck, FolderGit2, LayoutGrid, Package, Pill, Tags, Truck, Users } from 'lucide-react';
+import { Activity, BookOpen, FileCheck, FolderGit2, LayoutGrid, Package, Pill, ShoppingBag, Tags, Truck, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -58,6 +58,7 @@ export function AppSidebar() {
             { title: 'Obat', href: '/admin/medicines', icon: Pill },
             { title: 'Batch Obat', href: '/admin/medicine-batches', icon: Package },
             { title: 'Validasi Resep', href: '/admin/prescriptions', icon: FileCheck },
+            { title: 'Pesanan', href: '/admin/orders', icon: ShoppingBag },
         ] : []),
 
         ...(hasAnyRole(['admin']) ? [

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\MedicineBatchController;
 use App\Http\Controllers\Admin\MedicineController;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SystemMonitorController;
 use App\Http\Controllers\Admin\UserController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Admin\PrescriptionController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\UserOrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -41,9 +43,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('suppliers', SupplierController::class)->except(['create', 'edit']);
             Route::resource('medicines', MedicineController::class)->except(['create', 'edit']);
             Route::resource('medicine-batches', MedicineBatchController::class)->except(['create', 'edit']);
+
+            // ========================================================
+            // UC3: TRANSAKSI BELANJA
+            // ========================================================
+            Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+            Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
             
             // ========================================================
-            // UC3: VERIFIKASI RESEP DOKTER
+            // UC4: VERIFIKASI RESEP DOKTER
             // ========================================================
             Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
             Route::put('/prescriptions/{prescription}', [PrescriptionController::class, 'update'])->name('prescriptions.update');
@@ -63,6 +71,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('checkout')->name('checkout.')->group(function () {
         Route::get('/', [CheckoutController::class, 'index'])->name('index');
         Route::post('/', [CheckoutController::class, 'process'])->name('process');
+    });
+
+    Route::prefix('my-orders')->name('user.orders.')->group(function () {
+        Route::get('/', [UserOrderController::class, 'index'])->name('index');
+        Route::put('/{order}/complete', [UserOrderController::class, 'complete'])->name('complete');
     });
 
 });
