@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Activity, BookOpen, FileCheck, FolderGit2, LayoutGrid, Package, Pill, ShoppingBag, Tags, Truck, Users, Computer, BarChart, UploadCloud } from 'lucide-react';
+import { Activity, BookOpen, FileCheck, FolderGit2, Package, Pill, ShoppingBag, Tags, Truck, Users, Computer, BarChart, UploadCloud, ShoppingCart, ReceiptText } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -45,29 +45,7 @@ export function AppSidebar() {
 
     // 3. Render Menu Berdasarkan Hak Akses (RBAC)
     const mainNavItems: NavItem[] = [
-        {
-            title: 'Dashboard',
-            href: dashboard(),
-            icon: LayoutGrid,
-        },
-
-        // --- MANAJEMEN OBAT DAN KATEGORI ---
-        ...(hasAnyRole(['admin', 'pharmacist']) ? [
-            { title: 'Kategori', href: '/admin/categories', icon: Tags },
-            { title: 'Supplier', href: '/admin/suppliers', icon: Truck },
-            { title: 'Obat', href: '/admin/medicines', icon: Pill },
-            { title: 'Batch Obat', href: '/admin/medicine-batches', icon: Package },
-            { title: 'Validasi Resep', href: '/admin/prescriptions', icon: FileCheck },
-            { title: 'Pesanan', href: '/admin/orders', icon: ShoppingBag },
-            { title: 'Upload/Download', href: '/admin/reports', icon: UploadCloud },
-        ] : []),
-
-        // --- MANAJEMEN OBAT DAN KATEGORI ---
-        ...(hasAnyRole(['cashier']) ? [
-            { title: 'Kasir', href: '/admin/pos', icon: Computer },
-        ] : []),
-
-        ...(hasAnyRole(['admin']) ? [
+      ...(hasAnyRole(['admin']) ? [
           // --- DASHBOARD REALTIME ---
           { title: 'Dashboard Admin', href: '/admin/dashboard', icon: BarChart },
 
@@ -77,6 +55,27 @@ export function AppSidebar() {
           // --- MEMANTAU SERVER & LOG ---
           { title: 'System Monitor', href: '/admin/system-monitor', icon: Activity },
         ] : []),
+
+        // --- MANAJEMEN OBAT DAN KATEGORI ---
+        ...(hasAnyRole(['admin', 'pharmacist']) ? [
+            { title: 'Kategori', href: '/admin/categories', icon: Tags },
+            { title: 'Supplier', href: '/admin/suppliers', icon: Truck },
+            { title: 'Obat', href: '/admin/medicines', icon: Pill },
+            { title: 'Batch Obat', href: '/admin/medicine-batches', icon: Package },
+            { title: 'Validasi Resep', href: '/admin/prescriptions', icon: FileCheck },
+            { title: 'Pesanan', href: '/admin/orders', icon: ReceiptText },
+            { title: 'Upload/Download', href: '/admin/reports', icon: UploadCloud },
+        ] : []),
+
+        // --- MANAJEMEN OBAT DAN KATEGORI ---
+        ...(hasAnyRole(['cashier']) ? [
+            { title: 'Kasir', href: '/admin/pos', icon: Computer },
+        ] : []),
+
+
+        { title: 'Katalog', href: '/shop', icon: BookOpen },
+        { title: 'Keranjang', href: '/cart', icon: ShoppingCart },
+        { title: 'Pesanan Saya', href: '/my-orders', icon: ShoppingBag },
     ];
 
     return (
@@ -98,7 +97,9 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
+                {!hasAnyRole(['patient']) && (
+                    <NavFooter items={footerNavItems} className="mt-auto" />
+                )}
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

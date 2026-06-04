@@ -151,21 +151,21 @@ export default function ShopIndex({
 
                     <div className="flex flex-wrap items-center gap-3">
                         <Button
-                            onClick={() => router.get('/my-orders')}
-                            variant="outline"
-                            className="flex items-center gap-2 rounded-full border-slate-200 bg-white/80 text-slate-700 backdrop-blur-sm hover:bg-slate-50 hover:text-emerald-600"
-                        >
-                            <ShoppingBag className="h-4 w-4" />
-                            Pesanan Saya
-                        </Button>
-
-                        <Button
                             onClick={() => router.get('/cart')}
                             variant="outline"
                             className="flex items-center gap-2 rounded-full border-slate-200 bg-white/80 text-slate-700 backdrop-blur-sm hover:bg-slate-50 hover:text-emerald-600"
                         >
                             <ShoppingCart className="h-4 w-4" />
                             Keranjang
+                        </Button>
+                                                
+                        <Button
+                            onClick={() => router.get('/my-orders')}
+                            variant="outline"
+                            className="flex items-center gap-2 rounded-full border-slate-200 bg-white/80 text-slate-700 backdrop-blur-sm hover:bg-slate-50 hover:text-emerald-600"
+                        >
+                            <ShoppingBag className="h-4 w-4" />
+                            Pesanan Saya
                         </Button>
 
                         {auth?.user ? (

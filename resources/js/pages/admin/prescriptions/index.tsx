@@ -29,11 +29,18 @@ interface Prescription {
   };
 }
 
+interface PaginatedData {
+  data: Prescription[];
+  links: any[];
+  current_page: number;
+  last_page: number;
+}
+
 export default function PrescriptionIndex({
   prescriptions,
   filters
 }: {
-  prescriptions: { data: Prescription[]; links: any[] };
+  prescriptions: PaginatedData;
   filters: { status: string };
 }) {
   const [selectedStatus, setSelectedStatus] = useState(filters.status);
@@ -81,7 +88,7 @@ export default function PrescriptionIndex({
           <p className="text-sm text-gray-500">Evaluasi keabsahan resep pasien sebelum pesanan diproses.</p>
         </div>
         
-        <div className="w-64">
+        <div className="flex max-w-xs items-center space-x-2">
           <Select value={selectedStatus} onValueChange={handleFilterChange}>
             <SelectTrigger><SelectValue placeholder="Filter Status" /></SelectTrigger>
             <SelectContent>
@@ -138,6 +145,29 @@ export default function PrescriptionIndex({
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* PAGINATION */}
+      <div className="mt-4 flex items-center justify-between">
+        <p className="text-sm text-gray-500">
+          Menampilkan {prescriptions.data.length > 0 ? (prescriptions.current_page - 1) * 10 + 1 : 0} - {Math.min(prescriptions.current_page * 10, prescriptions.data.length > 0 ? prescriptions.current_page * 10 : 0)} dari total {prescriptions.links ? prescriptions.links.length - 2 : 0} Halaman
+        </p>
+        <div className="flex space-x-2">
+          {prescriptions.links.map((link, index) => (
+            <Button
+              key={index}
+              variant={link.active ? "default" : "outline"}
+              size="sm"
+              disabled={!link.url}
+              onClick={() => {
+                if (link.url) {
+                  router.get(link.url, {}, { preserveState: true, preserveScroll: true });
+                }
+              }}
+              dangerouslySetInnerHTML={{ __html: link.label }}
+            />
+          ))}
+        </div>
       </div>
 
       {/* MODAL VERIFIKASI */}

@@ -31,10 +31,10 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $input['password'],
         ]);
 
-        $customerRoleId = DB::table('roles')->where('name', 'customer')->value('id');
-        if ($customerRoleId) {
+        $patientRoleId = DB::table('roles')->where('name', 'patient')->value('id');
+        if ($patientRoleId) {
             DB::table('model_has_roles')->insert([
-                'role_id' => $customerRoleId,
+                'role_id' => $patientRoleId,
                 'model_type' => User::class,
                 'model_id' => $user->id,
             ]);

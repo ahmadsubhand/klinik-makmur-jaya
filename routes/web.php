@@ -21,7 +21,27 @@ use Illuminate\Support\Facades\Route;
 Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('/dashboard', function () {
+        $user = Auth::user();
+
+        if ($user->hasRole('admin')) {
+            return redirect('/admin/dashboard');
+        }
+
+        if ($user->hasRole('pharmacist')) {
+            return redirect('/prescriptions');
+        }
+
+        if ($user->hasRole('cashier')) {
+            return redirect('/cashier/dashboard');
+        }
+
+        if ($user->hasRole('patient')) {
+            return redirect('/my-orders');
+        }
+
+        abort(403, 'Role tidak memiliki dashboard.');
+    })->name('dashboard');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         // ========================================================

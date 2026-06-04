@@ -16,7 +16,14 @@ interface Order {
   payment_proof_url: string | null;
 }
 
-export default function AdminOrderIndex({ orders, filters }: { orders: any, filters: { status: string } }) {
+interface PaginatedData {
+  data: Order[];
+  links: any[];
+  current_page: number;
+  last_page: number;
+}
+
+export default function AdminOrderIndex({ orders, filters }: { orders: PaginatedData, filters: { status: string } }) {
   
   const updateStatus = (orderId: number, newStatus: string) => {
     router.put(`/admin/orders/${orderId}`, { status: newStatus }, { preserveScroll: true });
@@ -46,7 +53,7 @@ export default function AdminOrderIndex({ orders, filters }: { orders: any, filt
           <p className="text-sm text-gray-500">Kelola dan update status pengiriman pesanan pelanggan.</p>
         </div>
         
-        <div className="w-64">
+        <div className="flex max-w-xs items-start space-x-2">
           <Select 
             value={filters.status || 'all'} 
             onValueChange={(val) => router.get('/admin/orders', val === 'all' ? {} : { status: val }, { preserveState: true })}
@@ -158,6 +165,29 @@ export default function AdminOrderIndex({ orders, filters }: { orders: any, filt
             </div>
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* PAGINATION */}
+      <div className="mt-4 flex items-center justify-between">
+        <p className="text-sm text-gray-500">
+          Menampilkan {orders.data.length > 0 ? (orders.current_page - 1) * 10 + 1 : 0} - {Math.min(orders.current_page * 10, orders.data.length > 0 ? orders.current_page * 10 : 0)} dari total {orders.links ? orders.links.length - 2 : 0} Halaman
+        </p>
+        <div className="flex space-x-2">
+          {orders.links.map((link, index) => (
+            <Button
+              key={index}
+              variant={link.active ? "default" : "outline"}
+              size="sm"
+              disabled={!link.url}
+              onClick={() => {
+                if (link.url) {
+                  router.get(link.url, {}, { preserveState: true, preserveScroll: true });
+                }
+              }}
+              dangerouslySetInnerHTML={{ __html: link.label }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
