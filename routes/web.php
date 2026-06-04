@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\MedicineBatchController;
 use App\Http\Controllers\Admin\MedicineController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\PosController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SystemMonitorController;
 use App\Http\Controllers\Admin\UserController;
@@ -56,6 +57,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // ========================================================
             Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
             Route::put('/prescriptions/{prescription}', [PrescriptionController::class, 'update'])->name('prescriptions.update');
+        });
+
+        // ========================================================
+        // UC5: TRANSAKSI OFFLINE
+        // ========================================================
+        Route::middleware(['role:cashier'])->group(function() {
+            Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
+            Route::post('/pos', [PosController::class, 'store'])->name('pos.store');
         });
     });
 
