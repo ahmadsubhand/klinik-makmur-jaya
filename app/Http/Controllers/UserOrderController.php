@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -36,5 +37,28 @@ class UserOrderController extends Controller
         }
 
         return back()->with('error', 'Status pesanan tidak dapat diubah.');
+    }
+
+    public function uploadPaymentProof(Request $request, Transaction $order)
+    {
+        if ($order->patient_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'payment_proof' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'payment_proof.required' => 'Silakan pilih foto bukti pembayaran terlebih dahulu.',
+            'payment_proof.image' => 'File harus berupa gambar (JPG/PNG).',
+        ]);
+
+        $path = $request->file('payment_proof')->store('payments', 'public');
+
+        $order->update([
+            'payment_proof' => $path,
+            'payment_status' => 'pending_verification', // Menunggu dicek Admin
+        ]);
+
+        return back()->with('success', 'Bukti pembayaran berhasil diunggah. Kami akan segera memverifikasinya.');
     }
 }

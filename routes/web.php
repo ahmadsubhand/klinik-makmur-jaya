@@ -49,6 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // ========================================================
             Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
             Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+            Route::put('/orders/{order}/verify-payment', [OrderController::class, 'verifyPayment'])->name('orders.verify-payment');
             
             // ========================================================
             // UC4: VERIFIKASI RESEP DOKTER
@@ -76,6 +77,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('my-orders')->name('user.orders.')->group(function () {
         Route::get('/', [UserOrderController::class, 'index'])->name('index');
         Route::put('/{order}/complete', [UserOrderController::class, 'complete'])->name('complete');
+        Route::post('/{order}/payment', [UserOrderController::class, 'uploadPaymentProof'])->name('payment');
     });
 
 });

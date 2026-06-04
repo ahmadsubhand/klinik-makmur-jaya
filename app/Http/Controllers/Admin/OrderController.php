@@ -38,4 +38,13 @@ class OrderController extends Controller
 
         return back()->with('success', 'Status pesanan berhasil diperbarui.');
     }
+
+    public function verifyPayment(Transaction $order)
+    {
+        $order->update([
+            'payment_status' => 'paid',
+        ]);
+
+        return back()->with('success', 'Pembayaran telah diverifikasi. Silakan proses pesanan ini.');
+    }
 }

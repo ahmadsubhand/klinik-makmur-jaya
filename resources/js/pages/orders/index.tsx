@@ -1,9 +1,11 @@
 import { Head, router } from '@inertiajs/react';
 import { Package, Clock, Truck, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 // ... (Interface disederhanakan untuk contoh)
 interface Order {
@@ -11,6 +13,8 @@ interface Order {
   created_at: string;
   total_price: string;
   status: string;
+  payment_status: string;
+  payment_proof_url: string | null;
   details: { id: number; quantity: number; subtotal: string; medicine: { name: string } }[];
 }
 
@@ -74,12 +78,47 @@ export default function MyOrders({ orders }: { orders: { data: Order[]; links: a
                   </div>
                   
                   <div className="flex gap-2 w-full md:w-auto">
-                    <Button variant="outline" className="w-full md:w-auto" onClick={() => setSelectedOrder(order)}>Detail</Button>
-                    {order.status === 'shipped' && (
-                      <Button className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700" onClick={() => markAsCompleted(order.id)}>
-                        Pesanan Diterima
-                      </Button>
-                    )}
+                    <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                      {/* TOMBOL UPLOAD BUKTI BAYAR */}
+                      {order.payment_status === 'unpaid' && order.status !== 'cancelled' && (
+                        <div>
+                          <Input 
+                            type="file" 
+                            id={`upload-${order.id}`} 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                router.post(`/my-orders/${order.id}/payment`, {
+                                  _method: 'post',
+                                  payment_proof: e.target.files[0]
+                                }, { preserveScroll: true });
+                              }
+                            }}
+                          />
+                          <Label 
+                            htmlFor={`upload-${order.id}`} 
+                            className="inline-flex items-center justify-center w-40 h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md cursor-pointer text-sm font-medium transition-colors"
+                          >
+                            Upload Bukti Bayar
+                          </Label>
+                        </div>
+                      )}
+
+                      {order.payment_status === 'pending_verification' && (
+                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 flex items-center h-10 px-4">
+                          Menunggu Cek Pembayaran
+                        </Badge>
+                      )}
+
+                      <Button variant="outline" className="w-full md:w-auto h-10" onClick={() => setSelectedOrder(order)}>Detail</Button>
+                      
+                      {order.status === 'shipped' && (
+                        <Button className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 h-10" onClick={() => markAsCompleted(order.id)}>
+                          Pesanan Diterima
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

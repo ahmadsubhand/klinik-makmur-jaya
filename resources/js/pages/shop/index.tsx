@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { Search, ShoppingCart, Info } from 'lucide-react';
+import { Search, ShoppingCart, Info, ShoppingBag } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -89,10 +89,17 @@ export default function ShopIndex({
             <p className="text-gray-500 mt-1">Temukan kebutuhan obat dan alat kesehatan Anda.</p>
           </div>
           
-          <Button onClick={() => router.get('/cart')} variant="outline" className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
-            Lihat Keranjang
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => router.get('/my-orders')} variant="outline" className="flex items-center gap-2">
+              <ShoppingBag className="h-4 w-4" />
+              Pesanan Saya
+            </Button>
+
+            <Button onClick={() => router.get('/cart')} variant="outline" className="flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4" />
+              Lihat Keranjang
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border">
