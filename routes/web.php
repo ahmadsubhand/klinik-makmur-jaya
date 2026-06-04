@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SystemMonitorController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ShopController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,7 +19,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
         // ========================================================
         // UC1: MANAJEMEN PENGGUNA
-        // Akses: Admin
         // ========================================================
         Route::middleware(['role:admin'])->group(function () {
             Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -27,7 +27,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
              // ========================================================
             // UC8: MEMANTAU SERVER & LOG
-            // Akses: Admin
             // ========================================================
             Route::get('/system-monitor', [SystemMonitorController::class, 'index'])->name('system.monitor');
         });
@@ -35,7 +34,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // ========================================================
         // UC2: MANAJEMEN OBAT DAN KATEGORI
-        // Akses: Admin, Apoteker
         // ========================================================
         Route::middleware(['role:admin|pharmacist'])->group(function () {
             Route::resource('categories', CategoryController::class)->except(['create', 'edit']);
@@ -45,18 +43,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
     });
 
-    Route::prefix('cart')->name('chart.')->group(function () {
+    // ========================================================
+    // UC3: TRANSAKSI BELANJA
+    // ========================================================
+    Route::prefix('cart')->name('cart.')->group(function () {
         Route::get('/', [CartController::class, 'index'])->name('index');
         Route::post('/', [CartController::class, 'store'])->name('store');
         Route::put('/{cart}', [CartController::class, 'update'])->name('update');
         Route::delete('/{cart}', [CartController::class, 'destroy'])->name('destroy');
     });
+
+    Route::prefix('checkout')->name('checkout.')->group(function () {
+        Route::get('/', [CheckoutController::class, 'index'])->name('index');
+        Route::post('/', [CheckoutController::class, 'process'])->name('process');
+    });
+
 });
 
 // ========================================================
 // UC3: KATALOG OBAT
-// Akses: Semua
 // ========================================================
-Route::get('/shop', [ShopController::class, 'index'])->name('shop');
+Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 
 require __DIR__.'/settings.php';
