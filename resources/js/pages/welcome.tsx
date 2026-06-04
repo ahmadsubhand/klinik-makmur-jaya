@@ -36,7 +36,7 @@ export default function Welcome() {
                     <div className="flex items-center gap-4">
                         {auth.user ? (
                             <Link
-                                href="/admin/dashboard"
+                                href="/dashboard"
                                 className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all"
                             >
                                 Dashboard Akun
