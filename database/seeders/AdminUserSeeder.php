@@ -34,7 +34,7 @@ class AdminUserSeeder extends Seeder
         );
 
         // 3. Hubungkan User dengan Role Admin (jika belum terhubung)
-        if (! $adminUser->hasRole('admin')) {
+        if (!$adminUser->hasRole('admin')) {
             $adminUser->roles()->attach($adminRole->id, [
                 'model_type' => User::class
             ]);
@@ -54,7 +54,7 @@ class AdminUserSeeder extends Seeder
         );
 
         // 3. Hubungkan User dengan Role Admin (jika belum terhubung)
-        if (! $adminSecondaryUser->hasRole('admin')) {
+        if (!$adminSecondaryUser->hasRole('admin')) {
             $adminSecondaryUser->roles()->attach($adminRole->id, [
                 'model_type' => User::class
             ]);

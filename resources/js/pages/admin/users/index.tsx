@@ -62,7 +62,7 @@ const roleTranslations: Record<string, string> = {
   'admin': 'Administrator',
   'pharmacist': 'Apoteker',
   'cashier': 'Kasir',
-  'customer': 'Pelanggan',
+  'patient': 'Pasien',
   // Tambahkan role lain di sini jika ada di database Anda
 };
 
