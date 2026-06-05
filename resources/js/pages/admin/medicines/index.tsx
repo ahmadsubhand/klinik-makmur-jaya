@@ -1,6 +1,10 @@
 import { Head, useForm, router } from '@inertiajs/react';
-import { Pencil, Trash2, Plus, Search, ArrowUpDown, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import axios from 'axios';
+import { clsx  } from 'clsx';
+import type {ClassValue} from 'clsx';
+import { Pencil, Trash2, Plus, Search, ArrowUpDown, Image as ImageIcon, AlertTriangle, ChevronsUpDown, Loader2, Check } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { twMerge } from 'tailwind-merge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,6 +33,12 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import ImportCsv from '../../../components/import-csv';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 interface Category { id: number; name: string; }
 interface Supplier { id: number; name: string; }
@@ -63,12 +73,10 @@ interface Filters {
 export default function MedicineIndex({
   medicines,
   categories,
-  suppliers,
   filters,
 }: {
   medicines: PaginatedData;
   categories: Category[];
-  suppliers: Supplier[];
   filters: Filters;
 }) {
   const [searchTerm, setSearchTerm] = useState(filters?.search || '');
@@ -214,6 +222,30 @@ export default function MedicineIndex({
   
   const [isOpenCsv, setIsOpenCsv] = useState(false);
 
+  // State untuk Async Combobox Supplier
+  const [openSupplierCombobox, setOpenSupplierCombobox] = useState(false);
+  const [searchSupplierQuery, setSearchSupplierQuery] = useState('');
+  const [supplierOptions, setSupplierOptions] = useState<Supplier[]>([]);
+  const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
+
+  // Fetch data supplier secara asinkron
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      setIsLoadingSuppliers(true);
+      
+      try {
+        const res = await axios.get(`/api/suppliers/search?q=${searchSupplierQuery}`);
+        setSupplierOptions(res.data);
+      } catch (error) {
+        console.error("Gagal mengambil data supplier", error);
+      } finally {
+        setIsLoadingSuppliers(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchSupplierQuery]);
+
   return (
     <div className="p-8 pb-20">
       <Head title="Kelola Master Obat" />
@@ -250,7 +282,10 @@ export default function MedicineIndex({
           setIsOpen(open);
 
           if (!open) { 
-            reset(); setEditingMedicine(null); clearErrors(); 
+            reset();
+            setEditingMedicine(null);
+            clearErrors();
+            setSearchSupplierQuery('');
           } 
         }}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -348,15 +383,87 @@ export default function MedicineIndex({
                     <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-200">
                       <div className="grid gap-2">
                         <Label htmlFor="supplier_id">Supplier (Opsional)</Label>
-                        <Select value={data.supplier_id} onValueChange={(val) => setData('supplier_id', val)}>
-                          <SelectTrigger><SelectValue placeholder="Pilih Supplier" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">-- Tanpa Supplier --</SelectItem>
-                            {suppliers.map((sup) => (
-                              <SelectItem key={sup.id} value={sup.id.toString()}>{sup.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        
+                        <Popover open={openSupplierCombobox} onOpenChange={setOpenSupplierCombobox}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={openSupplierCombobox}
+                              className={cn(
+                                "w-full justify-between font-normal",
+                                (!data.supplier_id || data.supplier_id === 'none') && "text-muted-foreground"
+                              )}
+                            >
+                              {/* Logika Tampilan Teks Tombol (Trigger) */}
+                              {data.supplier_id === 'none' || !data.supplier_id
+                                ? "-- Tanpa Supplier --"
+                                  : supplierOptions.find((sup) => sup.id.toString() === data.supplier_id.toString())?.name || "Cari Supplier..."}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          
+                          <PopoverContent className="w-100 max-w-[90vw] p-0" align="start">
+                            <Command shouldFilter={false}>
+                              <CommandInput 
+                                placeholder="Ketik nama supplier..." 
+                                value={searchSupplierQuery}
+                                onValueChange={setSearchSupplierQuery}
+                              />
+                              <CommandList>
+                                <CommandEmpty>
+                                  {isLoadingSuppliers ? (
+                                    <div className="flex items-center justify-center py-6 text-sm text-gray-500">
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Mencari data...
+                                    </div>
+                                  ) : (
+                                    "Supplier tidak ditemukan."
+                                  )}
+                                </CommandEmpty>
+                                <CommandGroup>
+                                  {/* Selalu sediakan opsi statis untuk "Tanpa Supplier" di paling atas */}
+                                  <CommandItem
+                                    value="none"
+                                    onSelect={(currentValue) => {
+                                      setData('supplier_id', currentValue);
+                                      setOpenSupplierCombobox(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        data.supplier_id === "none" ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    -- Tanpa Supplier --
+                                  </CommandItem>
+
+                                  {/* List hasil pencarian dari database */}
+                                  {!isLoadingSuppliers && supplierOptions.map((sup) => (
+                                    <CommandItem
+                                      key={sup.id}
+                                      value={sup.id.toString()}
+                                      onSelect={(currentValue) => {
+                                        setData('supplier_id', currentValue);
+                                        setOpenSupplierCombobox(false);
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          data.supplier_id === sup.id.toString() ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      {sup.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        {errors.supplier_id && <span className="text-xs text-red-500">{errors.supplier_id}</span>}
                       </div>
 
                       <div className="grid gap-2">
