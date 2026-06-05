@@ -8,6 +8,7 @@ import { twMerge } from 'tailwind-merge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -33,8 +35,6 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import ImportCsv from '../../../components/import-csv';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -54,6 +54,10 @@ interface Medicine {
   total_stock: number;
   image_url: string | null;
   category: Category | null;
+  composition: string | null;
+  dosage: string | null;
+  side_effects: string | null;
+  is_low_stock_notified: boolean;
 }
 
 interface PaginatedData {
@@ -98,6 +102,9 @@ export default function MedicineIndex({
     price: '',
     min_stock: '10',
     image: null as File | null,
+    composition: '',
+    dosage: '',
+    side_effects: '',
     
     // Initial Batch Fields
     add_initial_batch: false,
@@ -158,6 +165,9 @@ export default function MedicineIndex({
       price: Math.floor(Number(medicine.price)).toString(), // Buang desimal jika .00
       min_stock: medicine.min_stock.toString(),
       image: null, // Jangan isi image saat edit kecuali user upload baru
+      composition: medicine.composition || '',
+      dosage: medicine.dosage || '',
+      side_effects: medicine.side_effects || '',
       
       add_initial_batch: false,
       supplier_id: 'none',
@@ -330,6 +340,20 @@ export default function MedicineIndex({
                     {errors.type && <span className="text-xs text-red-500">{errors.type}</span>}
                   </div>
 
+                  {/* INPUT BARU: Komposisi */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="composition">Komposisi Obat</Label>
+                    <Input id="composition" value={data.composition || ''} onChange={(e) => setData('composition', e.target.value)} placeholder="Misal: Amoxicillin 500mg" />
+                    {errors.composition && <span className="text-xs text-red-500">{errors.composition}</span>}
+                  </div>
+
+                  {/* INPUT BARU: Dosis */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="dosage">Dosis / Aturan Pakai</Label>
+                    <Input id="dosage" value={data.dosage || ''} onChange={(e) => setData('dosage', e.target.value)} placeholder="Misal: 3 x sehari 1 tablet" />
+                    {errors.dosage && <span className="text-xs text-red-500">{errors.dosage}</span>}
+                  </div>
+
                   <div className="grid gap-2">
                     <Label htmlFor="image">Gambar Produk {editingMedicine && <span className="text-gray-400 font-normal">(Kosongkan jika tidak diubah)</span>}</Label>
                     {imagePreview && (
@@ -358,6 +382,13 @@ export default function MedicineIndex({
                     <Label htmlFor="min_stock">Peringatan Minimum Stok</Label>
                     <Input id="min_stock" type="number" min="0" value={data.min_stock} onChange={(e) => setData('min_stock', e.target.value)} required />
                     {errors.min_stock && <span className="text-xs text-red-500">{errors.min_stock}</span>}
+                  </div>
+
+                  {/* INPUT BARU: Efek Samping */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="side_effects">Efek Samping</Label>
+                    <Textarea id="side_effects" value={data.side_effects || ''} onChange={(e) => setData('side_effects', e.target.value)} placeholder="Misal: Mengantuk, mual..." className="h-16" />
+                    {errors.side_effects && <span className="text-xs text-red-500">{errors.side_effects}</span>}
                   </div>
 
                   <div className="grid gap-2 flex-1 items-end">

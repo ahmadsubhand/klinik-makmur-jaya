@@ -7,7 +7,6 @@ use App\Jobs\ImportMedicineBatch;
 use App\Models\Category;
 use App\Models\Medicine;
 use App\Models\MedicineBatch;
-use App\Models\Supplier;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
@@ -50,12 +49,10 @@ class MedicineController extends Controller
             ->withQueryString();
 
         $categories = Category::select('id', 'name')->orderBy('name')->get();
-        $suppliers = Supplier::select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('admin/medicines/index', [
             'medicines' => $medicines,
             'categories' => $categories,
-            'suppliers' => $suppliers,
             'filters' => [
                 'search' => $search,
                 'category_id' => $categoryId,
@@ -75,6 +72,9 @@ class MedicineController extends Controller
             'price' => 'required|numeric|min:0|max:99999999',
             'min_stock' => 'required|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'composition' => 'nullable|string|max:255',
+            'dosage' => 'nullable|string|max:255',
+            'side_effects' => 'nullable|string',
             
             // Validasi Kondisional untuk Batch Pertama
             'add_initial_batch' => 'boolean',
@@ -99,6 +99,9 @@ class MedicineController extends Controller
                 'price' => $validated['price'],
                 'min_stock' => $validated['min_stock'],
                 'image_path' => $imagePath,
+                'composition' => $validated['composition'] ?? null,
+                'dosage' => $validated['dosage'] ?? null,
+                'side_effects' => $validated['side_effects'] ?? null,
             ]);
 
             // Jika admin mencentang tambah stok awal
@@ -130,6 +133,9 @@ class MedicineController extends Controller
             'price' => 'required|numeric|min:0|max:99999999',
             'min_stock' => 'required|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'composition' => 'nullable|string|max:255',
+            'dosage' => 'nullable|string|max:255',
+            'side_effects' => 'nullable|string',
         ], [
             'price.max' => 'Harga tidak boleh lebih dari Rp 99.999.999',
         ]);

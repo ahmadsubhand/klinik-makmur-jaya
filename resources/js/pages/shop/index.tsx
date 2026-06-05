@@ -5,12 +5,19 @@ import {
     ShoppingBag,
     LayoutDashboard,
     Sparkles,
-    LogIn
+    LogIn,
+    AlertTriangle
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast, Toaster } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -34,6 +41,10 @@ interface Medicine {
     total_stock: number;
     image_url: string | null;
     category: Category | null;
+    composition: string | null;
+    dosage: string | null;
+    side_effects: string | null;
+    is_low_stock_notified: boolean;
 }
 
 interface PaginatedData {
@@ -122,6 +133,14 @@ export default function ShopIndex({
         };
 
         return types[type] || { label: type, color: 'bg-slate-50 text-slate-700 border-slate-200' };
+    };
+
+    const [selectedDetail, setSelectedDetail] = useState<Medicine | null>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+    const openDetail = (medicine: Medicine) => {
+        setSelectedDetail(medicine);
+        setIsDetailOpen(true);
     };
 
     return (
@@ -278,9 +297,17 @@ export default function ShopIndex({
                                     <h3 className="mb-1.5 line-clamp-2 text-lg leading-snug font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
                                         {med.name}
                                     </h3>
-                                    <p className="mb-5 text-sm font-medium text-slate-500">
-                                        Kategori: {med.category?.name || '-'}
-                                    </p>
+                                    <div className="flex items-center justify-between mb-5">
+                                      <p className="text-sm font-medium text-slate-500">
+                                          Kategori: {med.category?.name || '-'}
+                                      </p>
+                                      <button 
+                                          onClick={() => openDetail(med)}
+                                          className="text-xs font-bold text-emerald-600 hover:text-emerald-800 underline decoration-emerald-600/30 underline-offset-4 transition-all"
+                                      >
+                                          Lihat Detail
+                                      </button>
+                                    </div>
 
                                     <div className="mt-auto mb-5 flex flex-col">
                                         <span className="text-sm text-slate-500 mb-1">Harga</span>
@@ -322,6 +349,75 @@ export default function ShopIndex({
                     </div>
                 )}
             </div>
+
+            {/* MODAL DETAIL OBAT */}
+            <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+                <DialogContent className="max-w-md sm:max-w-lg md:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-bold text-slate-900">
+                            Informasi Medis Obat
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    {selectedDetail && (
+                        <div className="mt-4 flex flex-col gap-5">
+                            {/* Header Info */}
+                            <div className="flex items-center gap-4 border-b border-slate-100 pb-5">
+                                <div className="h-20 w-20 shrink-0 rounded-xl border border-slate-100 bg-slate-50 p-2">
+                                    {selectedDetail.image_url ? (
+                                        <img src={selectedDetail.image_url} alt={selectedDetail.name} className="h-full w-full object-contain mix-blend-multiply" />
+                                    ) : (
+                                        <div className="flex h-full items-center justify-center"><Sparkles className="h-6 w-6 text-slate-300" /></div>
+                                    )}
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-bold text-slate-900">{selectedDetail.name}</h4>
+                                    <p className="text-sm font-medium text-slate-500">{selectedDetail.category?.name}</p>
+                                    <Badge variant="outline" className={`mt-2 text-[10px] ${formatType(selectedDetail.type).color}`}>
+                                        {formatType(selectedDetail.type).label}
+                                    </Badge>
+                                </div>
+                            </div>
+
+                            {/* Konten Medis (Grid 2 Kolom untuk Komposisi & Dosis) */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="rounded-xl bg-slate-50 p-4">
+                                    <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">Komposisi Utama</span>
+                                    <p className="text-sm text-slate-800 font-medium">
+                                        {selectedDetail.composition || 'Tidak ada informasi komposisi.'}
+                                    </p>
+                                </div>
+                                <div className="rounded-xl bg-slate-50 p-4">
+                                    <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">Dosis / Aturan Pakai</span>
+                                    <p className="text-sm text-slate-800 font-medium">
+                                        {selectedDetail.dosage || 'Sesuai petunjuk dokter/kemasan.'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Deskripsi */}
+                            <div>
+                                <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">Deskripsi</span>
+                                <p className="text-sm text-slate-600 leading-relaxed">
+                                    {selectedDetail.description || 'Tidak ada deskripsi tersedia.'}
+                                </p>
+                            </div>
+
+                            {/* Efek Samping (Warna lebih di-highlight karena penting) */}
+                            {(selectedDetail.side_effects || selectedDetail.type === 'prescription') && (
+                                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                                    <span className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-800">
+                                        <AlertTriangle className="h-4 w-4" /> Perhatian / Efek Samping
+                                    </span>
+                                    <p className="text-sm text-amber-900 mt-2">
+                                        {selectedDetail.side_effects || 'Hati-hati dalam penggunaan. Hubungi dokter jika terjadi reaksi alergi atau efek samping yang berkelanjutan.'}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {/* Pagination */}
             {medicines.links.length > 3 && (
