@@ -55,6 +55,9 @@ class ImportMedicineBatch implements ShouldQueue
                         'price'       => $row['price'],
                         'min_stock'   => $row['min_stock'],
                         'description' => $row['description'] ?? null,
+                        'composition'           => $row['composition'] ?? null,
+                        'dosage'                => $row['dosage'] ?? null,
+                        'side_effects'          => $row['side_effects'] ?? null,
                     ]
                 );
             }

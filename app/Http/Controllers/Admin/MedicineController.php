@@ -258,20 +258,25 @@ class MedicineController extends Controller
         ];
 
         // Kolom header sesuai yang dibutuhkan oleh Job ImportMedicineBatch
-        $columns = ['name', 'category_name', 'type', 'price', 'min_stock', 'description'];
+        $columns = [
+            'name', 'category_name', 'type', 'price', 'min_stock', 'description', 
+            'composition', 'dosage', 'side_effects',
+        ];
 
         $callback = function () use ($columns) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
             
-            // (Opsional) Tambahkan satu baris dummy sebagai contoh cara pengisian bagi user
             fputcsv($file, [
                 'Paracetamol 500mg', 
                 'Obat Bebas',
                 'over-the-counter', 
                 '5000', 
                 '10', 
-                'Obat penurun panas dan pereda nyeri ringan'
+                'Obat penurun panas dan pereda nyeri ringan',
+                'Paracetamol 500mg',
+                '3 x sehari 1 tablet',
+                'Dapat menyebabkan kantuk',
             ]);
             
             fclose($file);

@@ -29,9 +29,9 @@ Table permissions {
 }
 
 Table model_has_roles {
-  role_id int [ref: > roles.id]
+  role_id int [ref: > roles.id, not null]
   model_type varchar
-  model_id int
+  model_id int [ref: - users.id, not null]
   indexes {
     (role_id, model_id, model_type) [pk]
   }
@@ -65,6 +65,10 @@ Table medicines {
   type varchar [not null] // prescription, over-the-counter, supplement, medical_device
   price decimal(10,2) [not null]
   min_stock integer [default: 10]
+  is_low_stock_notified bool [default: false]
+  composition varchar
+  dosage varchar
+  side_effects varchar
   created_at timestamp
   updated_at timestamp
 }
@@ -115,6 +119,8 @@ Table transactions {
   total_price decimal(10,2) [not null]
   status varchar [not null] // pending, confirmed, processing, ready_for_pickup, shipped, completed
   payment_method varchar [not null]
+  payment_status string [default: 'unpaid']
+  payment_proof string
   created_at timestamp
   updated_at timestamp
 }
@@ -192,7 +198,7 @@ Table notifications {
   id uuid [primary key]
   type varchar
   notifiable_type varchar
-  notifiable_id int
+  notifiable_id int [ref: - users.id]
   data json [note: 'Detail alert stok minimum, import selesai, transfer diterima, dll']
   read_at timestamp [null]
   created_at timestamp

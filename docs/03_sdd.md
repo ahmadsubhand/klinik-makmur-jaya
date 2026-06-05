@@ -4,84 +4,97 @@
 
 ### Topologi Server
 
-Sistem E-Commerce Penjualan Obat Klinik Makmur Jaya mengadopsi arsitektur monolitik modular dengan pendekatan Server-Driven SPA (Single Page Application) menggunakan Laravel 13, Inertia.js, dan React. Untuk menangani komunikasi dua arah secara real-time (seperti notifikasi pesanan dan sinkronisasi stok instan), sistem mengintegrasikan WebSocket Server bawaan ekosistem Laravel (Laravel Reverb). Basis data menggunakan PostgreSQL 17 untuk mengelola beban relasional tinggi dan integritas data (ACID) dengan performa maksimal.
+Sistem E-Commerce Penjualan Obat Klinik Makmur Jaya mengadopsi arsitektur Monolithic Modular Application dengan pendekatan Server-Driven SPA (Single Page Application) menggunakan Laravel 13, Inertia.js, dan React. Seluruh proses bisnis, autentikasi, manajemen stok, transaksi penjualan, hingga pelaporan berjalan dalam satu aplikasi Laravel yang terintegrasi.
+
+Untuk menangani proses yang memerlukan waktu eksekusi lebih lama, seperti pembuatan laporan PDF dan pengiriman email, sistem memanfaatkan Laravel Queue yang dijalankan secara asynchronous. Selain itu, sistem menggunakan Laravel Scheduler yang dieksekusi melalui Cron Job untuk menjalankan tugas terjadwal seperti sinkronisasi data, pembersihan file sementara, dan proses otomatis lainnya.
+
+Basis data menggunakan PostgreSQL sebagai sistem manajemen basis data relasional yang menjamin konsistensi data transaksi melalui mekanisme ACID (Atomicity, Consistency, Isolation, Durability).
 
 ```mermaid
 flowchart TD
-    %% Definisi Elemen Desain & Tema Warna
+
     classDef client fill:#f9f9f9,stroke:#333,stroke-width:2px;
     classDef proxy fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
     classDef app fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
     classDef storage fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
-    classDef ws fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px;
 
-    %% Client Layer
     User["🖥️ Client Browser<br>React UI & Inertia Frontend"]:::client
 
-    %% Proxy Layer
-    subgraph Proxy_Layer ["Gateway & Reverse Proxy"]
+    subgraph Proxy_Layer["Gateway & Reverse Proxy"]
         Nginx["🌐 Nginx Server<br>SSL Termination & Routing"]:::proxy
     end
 
-    %% Application Layer
-    subgraph App_Layer ["Application Server Engine"]
-        Laravel["🚂 Laravel 13 Engine<br>PHP 8.5 FPM Core"]:::app
-        Inertia["🔄 Inertia.js Bridge<br>Data Shared Protocol"]:::app
-        Worker["⚙️ Laravel Queue Workers<br>Paralel Background Jobs"]:::app
-        Reverb["⚡ Laravel Reverb<br>WebSocket Server"]:::ws
+    subgraph App_Layer["Application Server"]
+        Laravel["🚂 Laravel 13<br>Business Logic & API Layer"]:::app
+        Inertia["🔄 Inertia.js Bridge"]:::app
+        Worker["⚙️ Laravel Queue Worker"]:::app
+        Scheduler["⏰ Laravel Scheduler<br>(Cron Job)"]:::app
     end
 
-    %% Storage & Cache Layer
-    subgraph Storage_Layer ["Data & State Storage"]
-        PostgreSQL[("🗄️ PostgreSQL 17<br>ACID Transactional")]:::storage
-        Redis[("⚡ Redis Cache & Queue<br>Session, Jobs, & Pub/Sub")]:::storage
-        Storage["📁 Local/Cloud Storage<br>Prescription Files"]:::storage
+    subgraph Storage_Layer["Data Storage"]
+        PostgreSQL[("🗄️ PostgreSQL<br>Transactional Database")]:::storage
+        Storage["📁 Local Storage<br>Prescription & Report Files"]:::storage
     end
 
-    %% Alur Koneksi
-    User <-->|HTTPS - Inertia Request| Nginx
-    User <-->|WSS - WebSocket Secure| Nginx
+    User <-->|HTTPS| Nginx
     Nginx <-->|FastCGI| Laravel
-    Nginx <-->|Proxy Pass| Reverb
+
     Laravel <--> Inertia
     Laravel <-->|Eloquent ORM| PostgreSQL
-    Laravel <-->|Pub/Sub Event Broadcast| Redis
-    Redis <-->|Broadcast Message| Reverb
-    Laravel <-->|Cache & Session| Redis
-    Worker <-->|Pop/Push Tasks| Redis
-    Worker <-->|Update Batch Stock| PostgreSQL
-    Laravel --->|Write Files| Storage
+
+    Worker <-->|Process Jobs| PostgreSQL
+    Scheduler -->|Execute Scheduled Tasks| Laravel
+
+    Laravel -->|Upload & Generate Files| Storage
 ```
+
+---
+
+### Spesifikasi Server yang Direkomendasikan
+
+| Komponen         | Minimum                 | Direkomendasikan        |
+| ---------------- | ----------------------- | ----------------------- |
+| Processor        | 2 vCPU                  | 4 vCPU                  |
+| RAM              | 4 GB                    | 8 GB                    |
+| Storage          | 50 GB SSD               | 100 GB NVMe SSD         |
+| Database         | PostgreSQL              | PostgreSQL              |
+| Bandwidth        | 1 TB/bulan              | 2 TB/bulan              |
+| Network Port     | 100 Mbps                | 1 Gbps                  |
+| Operating System | Ubuntu Server 24.04 LTS | Ubuntu Server 24.04 LTS |
+
+Menggunakan spesifikasi server yang direkomendasikan dapat mendukung performa yang lebih stabil pada proses transaksi, pengelolaan stok, pembuatan laporan PDF, dan pemrosesan antrean (queue worker). Selain itu secara umum sistem ini sudah mampu menangani ±100–300 pengguna aktif harian, ±20–50 pengguna bersamaan, ribuan transasksi perbulan, dan proses queue dan pembuatan PDF tanpa gangguan signifikan.
 
 ---
 
 ### Pemilihan Komponen & Framework
 
-1. **Laravel 13 (Backend Framework)**: Menawarkan performa eksekusi lebih cepat dengan PHP 8.5. Membawa ekosistem bawaan yang matang untuk routing, proteksi keamanan tingkat tinggi, manajemen antrean, dan ORM yang sangat optimal.
+1. **Laravel 13 (Backend Framework)**: Dipilih sebagai framework utama karena menyediakan struktur pengembangan yang matang, sistem routing yang fleksibel, ORM Eloquent, queue processing, scheduler, serta fitur keamanan bawaan yang lengkap. Laravel juga mempercepat pengembangan aplikasi melalui ekosistem yang terintegrasi.
 
-2. **Inertia.js (Frontend Bridge)**: Menghilangkan kebutuhan untuk membangun REST API yang terpisah secara penuh, memungkinkan state React dikontrol langsung dari controller Laravel.
+2. **Inertia.js (Frontend Bridge)**: Digunakan untuk menghubungkan Laravel dan React tanpa memerlukan pembangunan REST API secara penuh. Pendekatan ini menyederhanakan komunikasi antara backend dan frontend sehingga proses pengembangan menjadi lebih cepat dan pemeliharaan aplikasi lebih mudah.
 
-3. **React.js (Frontend UI Library)**: Memungkinkan pembuatan antarmuka reaktif. Sangat cocok disandingkan dengan WebSocket untuk merender ulang komponen (seperti sisa stok atau status pesanan) secara instan tanpa me-refresh halaman.
+3. **React 19 (Frontend UI Library)**: Digunakan untuk membangun antarmuka pengguna yang interaktif dan responsif. Pendekatan berbasis komponen memungkinkan pengembangan fitur yang modular dan mudah dipelihara.
 
-4. **PostgreSQL 17 (Database Engine)**: Sangat tangguh untuk menangani transaksi konkuren dengan kapabilitas Row-Level Locking yang superior. Mendukung tipe data JSONB tingkat lanjut jika diperlukan untuk fitur audit logging.
+4. **PostgreSQL 17 (Database Engine)**: Dipilih karena memiliki performa tinggi untuk transaksi relasional, mendukung integritas data yang kuat, serta mampu menangani transaksi secara bersamaan (concurrent transactions) dengan baik melalui mekanisme MVCC (Multi-Version Concurrency Control).
 
-5. **Laravel Reverb (Real-time Server)**: Solusi WebSocket pihak pertama dari Laravel. Mengeliminasi overhead HTTP Long-Polling sehingga sinkronisasi stok fisik dan online terjadi seketika (instant push).
+5. **Tailwind CSS 4 (Utility-First CSS Framework)**: Mempercepat proses pengembangan antarmuka dengan pendekatan utility-first yang konsisten dan terintegrasi dengan shadcn/ui.
 
-6. **Redis (Cache & Queue Driver)**: Esensial untuk fitur Pub/Sub yang digunakan oleh WebSocket, serta mengelola manajemen Cache Lock untuk menghindari insiden Race Condition saat proses checkout bersamaan.
+6. **shadcn/ui (UI Component System)**: Menyediakan kumpulan komponen antarmuka yang modern serta fleksibel untuk dikustomisasi sehingga dapat membantu dalam mempercepat pengembangan antarmuka.
 
-7. **shadcn/ui (UI Component System)**: Menyediakan kumpulan komponen antarmuka yang modern serta fleksibel untuk dikustomisasi sehingga dapat membantu dalam mempercepat pengembangan antarmuka.
-
-8. **Tailwind CSS (Utility-First CSS Framework)**: Mempercepat proses pengembangan antarmuka dengan pendekatan utility-first yang konsisten dan terintegrasi secara manual dengan shadcn/ui.
+7. **Vite**: Digunakan sebagai build tool modern untuk proses pengembangan frontend dengan memberikan waktu kompilasi yang cepat, Hot Module Replacement (HMR), serta optimasi build yang lebih efisien dibandingkan bundler tradisional.
 
 ---
 
 ### Analisis Skalabilitas
 
-1. **WebSocket Offloading**: Menggantikan teknik polling API tradisional. Browser pasien tidak perlu mengirim request HTTP berulang-ulang ke server untuk mengecek status pesanan. Server (via Reverb) akan langsung "mendorong" (push) data baru ke client secara real-time, menghemat resource bandwidth dan beban CPU secara drastis.
+1. **Efisiensi Pemrosesan Transaksi Database**: Sistem menggunakan PostgreSQL yang menerapkan mekanisme Multi-Version Concurrency Control (MVCC), sehingga proses pembacaan data katalog obat oleh banyak pengguna dapat berlangsung secara bersamaan tanpa menghambat proses transaksi penjualan yang sedang berjalan. Selain itu, transaksi kritis seperti pengurangan stok menggunakan mekanisme locking dan database transaction untuk menjaga konsistensi data ketika banyak pengguna melakukan pembelian pada waktu yang bersamaan.
 
-2. **PostgreSQL Concurrency Control**: Dengan MVCC (Multi-Version Concurrency Control) pada PostgreSQL 17, proses pembacaan data katalog oleh ribuan pasien tidak akan memblokir proses penulisan transaksi (checkout) yang sedang dilakukan pasien lain. Aplikasi menggunakan skema `lockForUpdate()` di Eloquent secara spesifik pada baris `medicine_batches` untuk mencegah duplikasi pemotongan FIFO.
+2. **Pemrosesan Asinkron melalui Queue Worker**: Proses yang membutuhkan waktu eksekusi relatif lama, seperti pembuatan laporan PDF, ekspor data, impor data massal, dan pengiriman email, dipindahkan ke Laravel Queue Worker. Pendekatan ini mencegah proses-proses tersebut membebani request utama pengguna sehingga waktu respons aplikasi tetap stabil meskipun volume transaksi meningkat.
 
-3. **Asynchronous Background Processing**: Pencetakan PDF analitik bisnis, batch insert impor stok massal, dan pengiriman email faktur diisolasi dari proses thread utama pengguna ke Queue Worker di Redis.
+3. **Optimasi Arsitektur Monolitik Modular**: Sistem dikembangkan menggunakan pendekatan modular monolith, di mana setiap modul bisnis seperti pengguna, stok, transaksi, dan pelaporan dipisahkan secara logis. Struktur ini memudahkan optimasi atau pengembangan pada modul tertentu tanpa memengaruhi keseluruhan sistem, sehingga mendukung pertumbuhan fitur dan peningkatan beban aplikasi dalam jangka panjang.
+
+4. **Otomatisasi Proses melalui Scheduler**: Berbagai proses rutin dijalankan menggunakan Laravel Scheduler dan Cron Job, seperti pembersihan file sementara dan pembuatan laporan berkala. Dengan memindahkan tugas-tugas terjadwal ke proses otomatis di luar request pengguna, sumber daya server dapat lebih difokuskan untuk melayani aktivitas transaksi dan akses pengguna.
+
+5. **Skalabilitas Vertikal Infrastruktur**: Arsitektur aplikasi memungkinkan peningkatan kapasitas server (vertical scaling) melalui penambahan CPU, RAM, dan kapasitas penyimpanan tanpa memerlukan perubahan signifikan pada kode aplikasi. Pendekatan ini sesuai untuk kebutuhan sistem e-commerce klinik yang diproyeksikan mengalami pertumbuhan jumlah pengguna dan transaksi secara bertahap.
 
 ---
 
@@ -101,219 +114,62 @@ flowchart TD
 
 ### ERD (Entity-Relationship Diagram)
 
----
-
 ![Entity Reational Database](./images/erd.png)
 
 ### Penjelasan Skema Basis Data
 
-#### 1. Domain Autentikasi, RBAC, & Audit Trail
+#### 1. Domain Autentikasi, Otorisasi (RBAC), Audit Trail, dan Notifikasi
 
-Domain ini mengelola identitas, pembatasan hak akses lintas entitas, dan perekaman jejak aktivitas secara mutakhir menggunakan package ekosistem Laravel.
+Domain ini mengelola identitas pengguna, pembatasan hak akses, pencatatan jejak aktivitas, dan notifikasi sistem menggunakan komponen bawaan Laravel serta struktur RBAC bergaya Spatie.
 
-1. **users**: Tabel core Laravel untuk autentikasi. Menyimpan seluruh entitas manusia (Pasien, Admin, Apoteker, Kasir) dengan kapabilitas soft-state melalui kolom `status` (`active/inactive`) dan terintegrasi langsung dengan fasad `Auth`.
+1. **users**: Tabel inti autentikasi Laravel. Menyimpan seluruh entitas manusia (pasien, admin, apoteker, kasir) dengan atribut identitas dasar, kontak, alamat, dan status akun (`active/inactive`). Tabel ini terhubung langsung dengan mekanisme Auth, session, dan fitur autentikasi Fortify.
 
-2. **Tabel RBAC (roles, permissions, model_has_roles, role_has_permissions)**: Mengadopsi struktur bawaan Spatie Laravel-Permission. Kolom `model_type` dan `model_id` pada tabel `model_has_roles` menggunakan konsep relasi polimorfik (*Polymorphic Relations*) Laravel. Hal ini memungkinkan peran (*role*) tidak hanya disematkan pada model `User`, tetapi juga model lain jika aplikasi berkembang di masa depan.
+2. **roles, permissions, model_has_roles, role_has_permissions**: Struktur RBAC untuk pemetaan peran dan izin. Tabel `model_has_roles` menggunakan relasi polimorfik melalui kolom `model_type` dan `model_id`, sehingga peran dapat dikaitkan ke model lain selain User jika aplikasi berkembang di masa depan. Tabel `role_has_permissions` menjadi penghubung many-to-many antara role dan permission.
 
-3. **activity_log**: Mengadopsi struktur Spatie Activitylog. Tabel ini mencatat jejak audit secara detail tanpa perlu hardcode nama tabel. Kolom `subject_type` dan `subject_id` secara polimorfik merujuk pada model/data yang sedang dimodifikasi (misal: data transaksi), sedangkan `causer_type` dan `causer_id` merujuk pada user yang melakukan modifikasi. Detail perubahan disimpan di kolom `properties` dengan format tipe data JSON.
+3. **audit_logs**: Tabel audit trail untuk merekam perubahan data penting. Kolom `auditable_type` dan `auditable_id` menunjuk ke entitas yang dimodifikasi, sedangkan `user_id` merekam pelaku perubahan. Nilai sebelum dan sesudah perubahan disimpan dalam `old_values` dan `new_values` bertipe JSON, lengkap dengan `ip_address` dan waktu kejadian.
+
+4. **notifications**: Implementasi Laravel database notification system. Tabel ini menyimpan notifikasi persisten seperti peringatan stok minimum, impor selesai, atau konfirmasi pembayaran. Relasi polimorfik melalui `notifiable_type` dan `notifiable_id` memungkinkan notifikasi dikaitkan ke model penerima (saat ini pengguna). Kolom `read_at` menandai notifikasi yang sudah dibaca.
 
 ---
 
-#### 2. Domain Master Katalog & Inventaris
+#### 2. Domain Master Data Katalog & Inventaris
 
-Domain ini merancang pemisahan antara tampilan produk yang dilihat pengguna dan manajemen pergerakan barang di gudang.
+Domain ini memisahkan katalog obat yang dilihat pengguna dari pengelolaan stok fisik berbasis batch untuk mendukung FIFO.
 
-1. **categories & medicines**: Skema utama pengisian etalase. Tabel `medicines` mendefinisikan identitas obat dasar (nama, tipe, harga) dan menggunakan relasi Foreign Key ke `categories`.
+1. **categories & medicines**: `categories` menyimpan kategori obat, sedangkan `medicines` menyimpan identitas obat (nama, tipe, harga, komposisi, dosis, efek samping, dan ambang stok minimum). Relasi `medicines.category_id → categories.id` menggunakan SET NULL saat kategori dihapus, sehingga data obat tetap dapat dipertahankan.
 
-2. **medicine_batches**: Pilar utama dari algoritma FIFO (*First In First Out*). Satu baris di tabel `medicines` dapat memiliki relasi One-to-Many ke `medicine_batches`. Setiap suplai baru dari `suppliers` dicatat sebagai baris batch baru di sini, lengkap dengan `quantity_current` dan `expired_at`. Query aplikasi hanya akan menargetkan tabel ini untuk melakukan pengurangan stok fisik.
+2. **medicine_batches**: Pilar utama algoritma FIFO (First In First Out). Satu obat dapat memiliki banyak batch (One-to-Many). Setiap penerimaan stok dicatat sebagai baris baru dengan `batch_number`, `quantity_incoming`, `quantity_current`, `received_at`, dan `expired_at`. Pengurangan stok transaksi selalu menargetkan `quantity_current` pada batch terpilih sehingga urutan FIFO tetap konsisten.
+
+3. **suppliers**: Menyimpan data pemasok obat (nama, kontak, alamat) dan menjadi sumber relasi untuk batch penerimaan barang. Relasi `medicine_batches.supplier_id → suppliers.id` menggunakan SET NULL agar riwayat batch tetap terjaga meskipun data pemasok dinonaktifkan atau dihapus.
 
 ---
 
 #### 3. Domain Transaksi & Klinis
 
-Domain ini merekam alur checkout dari ujung ke ujung, sekaligus menjaga kepatuhan proses medis untuk penebusan resep.
+Domain ini merekam alur pembelian end-to-end sekaligus menjaga kepatuhan penebusan resep.
 
-1. **prescriptions**: Mengelola dokumen resep dokter. Pasien membuat data awal di sini. Tabel ini menampung rujukan file fisik di Laravel Storage (`prescription_path`), lalu menunggu intervensi dari `pharmacist_id` untuk memperbarui status persetujuan.
+1. **prescriptions**: Mengelola dokumen resep dokter yang diunggah pasien. File fisik disimpan di Laravel Storage dan direferensikan melalui `prescription_path`. Kolom `status` (`pending/approved/rejected`) diperbarui oleh apoteker melalui `pharmacist_id` dan catatan verifikasi dapat disimpan di `notes`.
 
-2. **transactions**: Pusat perekaman status pembelian. Kolom `type` menentukan alur transaksi. Jika online, `patient_id` akan terisi. Jika offline dari konter, `cashier_id` yang akan mengisi. Transaksi akan terhubung ke `prescription_id` hanya jika produk di dalam keranjang mewajibkan dokumen resep.
+2. **transactions**: Pusat perekaman transaksi penjualan. Kolom `type` membedakan transaksi online dan offline. Untuk transaksi online, `patient_id` terisi; untuk transaksi POS klinik, `cashier_id` terisi. Relasi ke `prescription_id` bersifat opsional dan hanya digunakan jika transaksi melibatkan obat yang memerlukan resep. Status transaksi dan pembayaran dipisahkan melalui `status` dan `payment_status`.
 
-3. **transaction_details**: Merupakan rincian isi keranjang. Adanya kolom `medicine_batch_id` sangat krusial. Ini mengunci riwayat bahwa sebuah obat dikeluarkan dari "Nomor Batch" yang mana. Konfigurasi ini menjamin konsistensi laporan pengeluaran stok sesuai prinsip FIFO tanpa risiko data mismatch di kemudian hari.
+3. **transaction_details**: Menyimpan rincian item per transaksi. Keberadaan `medicine_batch_id` sangat krusial karena mengunci batch spesifik yang benar-benar dikeluarkan dari stok sesuai urutan FIFO. Konfigurasi ini menjamin histori pengeluaran stok tetap konsisten dan dapat diaudit di masa mendatang.
 
 ---
 
 #### 4. Domain Pemrosesan Latar Belakang (Queue & Job Batching)
 
-Tabel-tabel ini adalah blueprint orisinal dari arsitektur Laravel Queue untuk menangani skalabilitas sistem tanpa mengorbankan performa (UX) di sisi React.
+Domain ini mendukung eksekusi pekerjaan asinkron agar proses berat tidak memperlambat respons pengguna.
 
-1. **jobs**: Menampung antrean pekerjaan tunggal yang asinkron, seperti transmisi email notifikasi pembayaran.
+1. **jobs**: Menyimpan antrean pekerjaan individual seperti pengiriman email, pembuatan dokumen ekspor, atau pemrosesan data impor. Queue worker Laravel mengambil pekerjaan dari tabel ini dan menjalankannya di latar belakang.
 
-2. **job_batches**: Spesifik untuk mengelola tugas berkelompok (*Batching*). Sangat krusial ketika Admin mengimpor puluhan ribu baris data stok obat dari file Excel. Tabel ini melacak progres penyelesaian pekerjaan (`total_jobs`, `pending_jobs`) yang datanya bisa diteruskan secara real-time ke antarmuka pengguna.
+2. **job_batches**: Digunakan untuk mengelola pekerjaan berkelompok (batching), misalnya impor stok dalam jumlah besar. Tabel ini melacak progres melalui `total_jobs`, `pending_jobs`, dan `failed_jobs`.
 
-3. **failed_jobs**: Mengamankan pekerjaan yang gagal dieksekusi (misal: karena server SMTP mati). Pengembang dapat melacak tumpukan error (*exception*) langsung dari tabel ini dan melakukan retry pekerjaan tersebut melalui Artisan command.
-
----
-
-## 3.3 Kebutuhan Migrasi dan Pembaharuan
-
-### Simulasi Migrasi Data (Manual ke E-Commerce)
-
-#### 1. Strategi Migrasi Data Obat
-
-Proses perpindahan data dari spreadsheet ke PostgreSQL dilakukan menggunakan fitur Laravel Seeder atau Artisan Command khusus. Proses ini menerapkan metode Chunking (baca 1000 baris per iterasi) untuk mengamankan limitasi memori PHP 8.5, serta mencocokkan ID obat lama dengan relasi kategori secara programatis.
+3. **failed_jobs**: Menyimpan pekerjaan yang gagal dieksekusi beserta payload, koneksi, queue, dan exception. Data ini digunakan untuk diagnosis masalah dan proses retry melalui Artisan command.
 
 ---
 
-#### 2. Mapping Field Table
+#### 5. Domain Ekspor Laporan
 
-| Data Spreadsheet Manual | Skema Tabel PostgreSQL            | Tipe Data PostgreSQL | Keterangan                               |
-| ----------------------- | --------------------------------- | -------------------- | ---------------------------------------- |
-| KODE_OBAT               | medicines.id                      | BIGINT               | Auto-increment PK                        |
-| NAMA_OBAT               | medicines.name                    | VARCHAR              | Dibersihkan dari karakter spasi berlebih |
-| HARGA_JUAL              | medicines.price                   | NUMERIC(10,2)        | Sesuai standar mata uang presisi         |
-| NO_BATCH                | medicine_batches.batch_number     | VARCHAR              | Unique identifier produksi               |
-| STOK_FISIK              | medicine_batches.quantity_current | INTEGER              | Stok FIFO berjalan saat ini              |
-| TGL_EXPIRED             | medicine_batches.expired_at       | DATE                 | Dikonversi ke format ISO (YYYY-MM-DD)    |
+Domain ini melacak proses pembuatan dokumen laporan secara asinkron.
 
----
-
-#### 3. Validasi Data Pasca Migrasi
-
-1. **Validasi Jumlah Data**: Total row antara spreadsheet dan table instances identik.
-
-2. **Validasi Nilai Persediaan**: Total valuasi harga stok di RDBMS tidak berselisih dengan rekapan catatan bendahara klinik.
-
----
-
-#### 4. Rollback Plan
-
-1. **Rollback Database Transaction**: Jika terjadi anomali (misalnya format tanggal rusak pada baris ke-5000), blok kode `DB::transaction()` akan memicu `DB::rollBack()`.
-
-2. **Restore Backup Database**: Infrastruktur data akan dikembalikan menggunakan utility `pg_restore` dari dump cadangan (`.dump`) terakhir.
-
----
-
-### Dokumen Cutover Plan
-
-#### 1. Timeline Eksekusi
-
-1. **H-2 (Kamis, 21.00 WIB)**: Freeze input inventaris baru di sisi admin klinik.
-
-2. **H-1 (Jumat, 18.00 WIB)**: Operasional dihentikan sementara untuk sinkronisasi nilai Stock Opname akhir.
-
-3. **Hari H (Sabtu, 00.01 - 04.00 WIB)**: Migrasi final data ke Production Database (PostgreSQL 17), penyalaan WebSocket Reverb Server, verifikasi SSL.
-
-4. **Hari H (Sabtu, 06.00 WIB)**: Akses operasional sistem dibuka 100%.
-
----
-
-#### 2. Langkah Cutover Utama (Sysadmin)
-
-1. **Aktifkan Maintenance Mode**: Eksekusi `php artisan down` (Mencegah trafik nyasar).
-
-2. **Migrasi Database**: Terapkan tabel via `php artisan migrate --force`.
-
-3. **Menjalankan Reverb Server**: Jalankan `php artisan reverb:start --daemon` (via Supervisor).
-
-4. **Impor Data Produksi**: Impor master data obat terakhir.
-
-5. **Nonaktifkan Maintenance Mode**: Cabut maintenance mode dengan `php artisan up`.
-
----
-
-### Impact Analysis Matrix (Perubahan Fitur)
-
-| Modul yang Diubah           | Komponen Terkena Dampak        | Tingkat Risiko | Potensi Masalah                                                                | Mitigasi Wajib                                                                   |
-| --------------------------- | ------------------------------ | -------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| Logika Stok (FIFO)          | Kasir (Offline) & Web (Online) | Tinggi         | Kesalahan substraction sehingga stok minus                                     | Integrasi Pessimistic Locking PostgreSQL & Unit Test konkuren                    |
-| Broadcast Event (WebSocket) | Frontend Real-time (React)     | Medium         | Layar pengguna gagal update otomatis jika server Reverb down                   | Konfigurasi fallback mechanism (tombol refresh manual jika koneksi WSS terputus) |
-| Sistem RBAC                 | Menu Navigasi Pengguna         | Tinggi         | Pasien bisa melihat dashboard analitik atau kasir tak bisa buka menu transaksi | Uji rute ketat via Inertia Middleware `role:admin`                               |
-
----
-
-## 3.4 Dokumentasi Teknis dan Panduan Pengguna
-
-### Panduan Pengguna (User Guide) Modul Pembelian Online
-
-#### Langkah Pembelian Real-Time
-
-1. **Akses Katalog**: Akses halaman katalog Klinik Makmur Jaya.
-
-2. **Cari Obat**: Cari obat menggunakan kotak pencarian pintar.
-
-3. **Tambah ke Keranjang**: Klik Tambah ke Keranjang. (Jika obat adalah obat keras, pop-up upload resep akan otomatis muncul).
-
-4. **Lanjutkan Pembayaran**: Pada halaman keranjang, klik Lanjutkan ke Pembayaran dan tentukan metode pengiriman.
-
-5. **Selesaikan Pembayaran**: Anda akan diarahkan ke halaman Pelacakan Pesanan.
-
-6. **Pantau Status Secara Live**: Anda tidak perlu me-refresh halaman. Jika apoteker telah menyiapkan obat Anda, status di layar akan otomatis berubah dari "Diproses" menjadi "Siap Diambil / Dikirim" dalam hitungan detik.
-
----
-
-### FAQ (Frequently Asked Questions)
-
-1. **Apakah saya perlu me-refresh layar terus-menerus untuk mengecek pesanan saya?**: Tidak. Sistem kami menggunakan teknologi sinkronisasi langsung (WebSocket). Perubahan status apa pun dari pihak apoteker akan langsung muncul di layar perangkat Anda secara otomatis.
-
-2. **Apakah stok yang tertera di website akurat dengan di klinik?**: Ya. Karena terintegrasi secara langsung (real-time), apabila pelanggan di klinik fisik membeli sisa satu-satunya obat, layar website Anda akan seketika memperbarui keterangan stok menjadi "Habis".
-
-3. **Bagaimana jika resep yang saya unggah kurang jelas?**: Apoteker akan memberikan status "Ditolak" disertai alasan di layar pelacakan Anda secara live, dan Anda bisa langsung mengunggah ulang dokumen yang lebih terang/jelas.
-
-4. **Berapa lama waktu untuk proses verifikasi resep?**: Selama jam operasional (08.00 - 21.00), proses verifikasi rata-rata hanya memakan waktu 5–15 menit berkat sistem notifikasi instan kami.
-
-5. **Bagaimana prioritas obat yang akan diberikan kepada saya?**: Kami menggunakan standarisasi keamanan farmasi (FIFO). Anda akan selalu mendapatkan stok obat yang masa kadaluarsanya masih jauh dan layak konsumsi.
-
----
-
-### Dokumentasi API (Contoh Endpoint & WebSocket Broadcast)
-
-#### 1. Sinkronisasi Checkout Terpusat
-
-1. **Endpoint**: `POST /api/v1/orders/checkout`
-
-2. **Fungsi**: Memvalidasi transaksi, mengurangi stok (PostgreSQL Lock), dan memicu event broadcast ke WebSocket.
-
-3. **Payload Request (JSON)**:
-
-```json
-{
-  "type": "online",
-  "payment_method": "qris",
-  "items": [
-    {
-      "medicine_id": 204,
-      "quantity": 1
-    }
-  ]
-}
-```
-
-4. **Response Sukses (201 Created)**:
-
-```json
-{
-  "success": true,
-  "transaction_id": 901,
-  "message": "Pesanan divalidasi. Stok dikunci via FIFO."
-}
-```
-
----
-
-#### 2. Skema Event Broadcast (WebSocket Reverb)
-
-1. **Channel**: `private-orders.{patient_id}`
-
-2. **Event Name**: `OrderStatusUpdated`
-
-3. **Fungsi**: Mengirimkan perubahan dari Kasir/Apoteker ke layar HP pasien tanpa delay HTTP.
-
-4. **Payload Socket (JSON)**:
-
-```json
-{
-  "transaction_id": 901,
-  "status": "ready_for_pickup",
-  "message": "Obat Anda telah selesai dikemas dan siap diambil di konter Klinik Makmur Jaya.",
-  "timestamp": "2026-06-03T07:47:00Z"
-}
-```
+1. **export_documents**: Mencatat permintaan ekspor laporan dari pengguna, termasuk nama laporan, jenis laporan (`inventory/transaction/audit/transfer`), status proses (`pending/processing/completed/failed`), lokasi file hasil generate (`file_path`), dan pesan kesalahan jika terjadi kegagalan. Tabel ini menjadi sumber status progres yang ditampilkan ke antarmuka admin.
