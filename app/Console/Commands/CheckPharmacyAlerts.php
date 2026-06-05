@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Medicine;
 use App\Models\MedicineBatch;
 use App\Models\User;
 use App\Notifications\SystemAlertNotification;
@@ -22,26 +21,12 @@ class CheckPharmacyAlerts extends Command
         // Ambil semua user dengan role admin/apoteker untuk dikirim notifikasi
         $admins = User::role(['admin', 'pharmacist'])->get();
 
-        // 1. CEK STOK KRITIS
-        $medicines = Medicine::withSum('batches', 'quantity_current')->get();
-        foreach ($medicines as $med) {
-            $stock = $med->batches_sum_quantity_current ?? 0;
-            if ($stock <= $med->min_stock) {
-                $msg = "Stok {$med->name} tersisa {$stock} (Batas minimum: {$med->min_stock}). Segera lakukan restok!";
-                
-                foreach ($admins as $admin) {
-                    $admin->notify(new SystemAlertNotification('Stok Kritis', $msg, 'critical'));
-                }
-            }
-        }
-
-        // 2. CEK OBAT MENDEKATI EXPIRED DATE (90, 60, 30 HARI)
-        // Kita hitung hari menggunakan Carbon
+        // CEK OBAT MENDEKATI EXPIRED DATE (90, 60, 30 HARI)
         $today = Carbon::today();
         
         $batches = MedicineBatch::where('quantity_current', '>', 0)
-                    ->whereNotNull('expired_at')
-                    ->get();
+            ->whereNotNull('expired_at')
+            ->get();
 
         foreach ($batches as $batch) {
             $expiredDate = Carbon::parse($batch->expired_at);

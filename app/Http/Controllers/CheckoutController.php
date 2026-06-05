@@ -7,6 +7,8 @@ use App\Models\MedicineBatch;
 use App\Models\Prescription;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use App\Models\User;
+use App\Notifications\NewOrderNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -60,7 +62,7 @@ class CheckoutController extends Controller
         ]);
 
         try {
-            DB::transaction(function () use ($validated, $carts, $requiresPrescription, $totalPrice, $request) {
+            $transaction = DB::transaction(function () use ($validated, $carts, $requiresPrescription, $totalPrice, $request) {
                 $userId = Auth::id();
 
                 // 1. Tangani Upload Resep & Buat Transaksi
@@ -131,7 +133,27 @@ class CheckoutController extends Controller
 
                 // 3. Bersihkan keranjang
                 Cart::where('user_id', $userId)->delete();
+
+                return $transaction;
             });
+
+            // Ambil semua apoteker
+            $pharmacists = User::role('pharmacist')->get();
+
+            // Bedakan pesan berdasarkan kebutuhan resep
+            if ($requiresPrescription) {
+                $title = "Validasi Resep Diperlukan!";
+                $message = "Pesanan baru #TRX-{$transaction->id} mengandung OBAT KERAS. Mohon segera periksa dan validasi resep dokter yang dilampirkan.";
+                $level = "warning"; // Gunakan warning/critical agar menonjol
+            } else {
+                $title = "Pesanan Online Baru Masuk";
+                $message = "Pesanan #TRX-{$transaction->id} telah masuk. Sedang menunggu proses pembayaran.";
+                $level = "info";
+            }
+
+            foreach ($pharmacists as $pharmacist) {
+                $pharmacist->notify(new NewOrderNotification($transaction->id, $title, $message, $level));
+            }
 
             return redirect()->route('shop.index')->with('success', 'Pesanan berhasil dibuat! Silakan tunggu konfirmasi.');
 

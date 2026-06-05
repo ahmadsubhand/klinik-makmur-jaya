@@ -31,11 +31,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         }
 
         if ($user->hasRole('pharmacist')) {
-            return redirect('/prescriptions');
+            return redirect('/admin/prescriptions');
         }
 
         if ($user->hasRole('cashier')) {
-            return redirect('/cashier/dashboard');
+            return redirect('/admin/pos');
         }
 
         if ($user->hasRole('patient')) {

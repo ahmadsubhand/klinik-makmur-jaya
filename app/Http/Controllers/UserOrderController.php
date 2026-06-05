@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use App\Models\User;
+use App\Notifications\NewOrderNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -58,6 +60,18 @@ class UserOrderController extends Controller
             'payment_proof' => $path,
             'payment_status' => 'pending_verification', // Menunggu dicek Admin
         ]);
+
+        // Ambil semua apoteker
+        $pharmacists = User::role('pharmacist')->get();
+
+        // Bedakan pesan berdasarkan kebutuhan resep
+        $title = "Pesanan Online Baru Masuk";
+        $message = "Pesanan #TRX-{$order->id} telah dibayar. Mohon segera konfirmasi pembayaran.";
+        $level = "critical";
+
+        foreach ($pharmacists as $pharmacist) {
+            $pharmacist->notify(new NewOrderNotification($order->id, $title, $message, $level));
+        }
 
         return back()->with('success', 'Bukti pembayaran berhasil diunggah. Kami akan segera memverifikasinya.');
     }

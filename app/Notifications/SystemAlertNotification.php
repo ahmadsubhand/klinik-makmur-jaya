@@ -3,10 +3,11 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class SystemAlertNotification extends Notification
+class SystemAlertNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -40,7 +41,7 @@ class SystemAlertNotification extends Notification
         return $mail
             ->line('Sistem mendeteksi adanya peringatan yang memerlukan perhatian Anda:')
             ->line('**' . $this->message . '**')
-            ->action('Buka Dashboard Admin', route('admin.dashboard')) // Pastikan route ini sesuai
+            ->action('Buka Dashboard Admin', route('admin.medicine-batches.index')) // Pastikan route ini sesuai
             ->line('Harap segera tindak lanjuti peringatan ini untuk kelancaran operasional klinik.');
     }
 

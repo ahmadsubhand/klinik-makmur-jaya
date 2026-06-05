@@ -10,7 +10,17 @@ use Illuminate\Database\Eloquent\Model;
 
 #[ObservedBy(AuditObserver::class)]
 #[Fillable([
-    'category_id', 'name', 'description', 'type', 'price', 'min_stock', 'image_path'
+    'category_id', 
+    'name', 
+    'description', 
+    'type', 
+    'price', 
+    'min_stock', 
+    'image_path', 
+    'is_low_stock_notified', 
+    'composition', 
+    'dosage', 
+    'side_effects',
 ])]
 class Medicine extends Model
 {
@@ -18,6 +28,10 @@ class Medicine extends Model
 
     // Menambahkan custom attribute secara otomatis (Total Stok & URL Gambar)
     protected $appends = ['total_stock', 'image_url'];
+
+    protected $casts = [
+        'is_low_stock_notified' => 'boolean',
+    ];
 
     public function category()
     {

@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use App\Observers\AuditObserver;
+use App\Observers\MedicineBatchObserver;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 
-#[ObservedBy(AuditObserver::class)]
+#[ObservedBy([
+    AuditObserver::class,
+    MedicineBatchObserver::class,
+])]
 #[Fillable([
     'medicine_id', 'supplier_id', 'batch_number', 
     'quantity_incoming', 'quantity_current', 
