@@ -9,6 +9,7 @@ use App\Models\Medicine;
 use App\Models\Transaction;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -62,8 +63,20 @@ class DashboardController extends Controller
             }
         }
         
-        // Ambil 10 obat yang paling mendesak (stok paling sedikit)
+        // 4. Ambil 10 obat yang paling mendesak (stok paling sedikit)
         $criticalStocks = $criticalStocks->sortBy('calculated_stock')->take(10)->values();
+
+        // 5. OBAT TERLARIS BULAN INI
+        $bestSellers = DB::table('transaction_details')
+            ->join('transactions', 'transactions.id', '=', 'transaction_details.transaction_id')
+            ->join('medicines', 'medicines.id', '=', 'transaction_details.medicine_id')
+            ->whereIn('transactions.status', $validStatuses)
+            ->where('transactions.created_at', '>=', $thisMonth)
+            ->select('medicines.id', 'medicines.name', DB::raw('SUM(transaction_details.quantity) as total_sold'))
+            ->groupBy('medicines.id', 'medicines.name')
+            ->orderByDesc('total_sold')
+            ->limit(5)
+            ->get();
 
         return Inertia::render('admin/dashboard/index', [
             'stats' => [
@@ -74,16 +87,19 @@ class DashboardController extends Controller
             ],
             'chartData' => $chartData,
             'criticalStocks' => $criticalStocks,
-            'exports' => ExportDocument::with('user')->latest()->get()
+            'exports' => ExportDocument::with('user')->latest()->get(),
+            'bestSellers' => $bestSellers,
         ]);
     }
 
     public function requestPdf()
     {
-        // 1. Catat ke tabel export_documents sesuai ERD
+        $currentMonth = now()->translatedFormat('F Y'); // Contoh: Juni 2026
+
+        // 1. Catat ke tabel export_documents
         $export = ExportDocument::create([
             'user_id' => Auth::id(),
-            'report_name' => 'Laporan Penjualan ' . now()->format('d M Y H:i'),
+            'report_name' => 'Laporan Penjualan - ' . $currentMonth,
             'type' => 'transaction',
             'status' => 'pending',
         ]);
@@ -91,6 +107,6 @@ class DashboardController extends Controller
         // 2. Utus Job ke belakang layar
         GenerateSalesReportPdf::dispatch($export->id);
 
-        return back()->with('success', 'Pembuatan PDF sedang diproses. Silakan pantau statusnya di tabel riwayat.');
+        return back()->with('success', 'Pembuatan PDF laporan bulan ' . $currentMonth . ' sedang diproses. Silakan pantau statusnya di tabel riwayat.');
     }
 }

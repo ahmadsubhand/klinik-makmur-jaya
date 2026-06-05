@@ -11,7 +11,8 @@ import {
   RefreshCw,
   Clock,
   XCircle,
-  Download
+  Download,
+  Award
 } from 'lucide-react';
 import React from 'react';
 import { 
@@ -58,16 +59,24 @@ interface ExportDoc {
   user: { name: string };
 }
 
+interface BestSeller {
+  id: number;
+  name: string;
+  total_sold: number;
+}
+
 export default function DashboardIndex({
   stats,
   chartData,
   criticalStocks,
   exports,
+  bestSellers,
 }: {
   stats: Stats;
   chartData: ChartItem[];
   criticalStocks: CriticalStock[];
-  exports: ExportDoc[]
+  exports: ExportDoc[];
+  bestSellers: BestSeller[];
 }) {
 
   // Custom Tooltip untuk Grafik Recharts agar format uangnya Rupiah
@@ -140,10 +149,38 @@ export default function DashboardIndex({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
+        {/* CARD TOP 5 OBAT TERLARIS (BARU) */}
+        <div className="bg-white p-6 rounded-xl border shadow-sm flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <Award className="h-5 w-5 text-emerald-500" /> Obat Terlaris Bulan Ini
+            </h2>
+          </div>
+
+          <div className="flex-1 space-y-3">
+            {bestSellers.length > 0 ? bestSellers.map((item, index) => (
+              <div key={item.id} className="p-3 border rounded-lg bg-emerald-50/30 flex justify-between items-center gap-1">
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-100 text-emerald-700 font-bold h-8 w-8 rounded-full flex items-center justify-center text-sm shadow-sm">
+                    #{index + 1}
+                  </div>
+                  <p className="font-semibold text-sm text-gray-900">{item.name}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-emerald-600">{item.total_sold}</p>
+                  <p className="text-[10px] text-gray-500">Terjual</p>
+                </div>
+              </div>
+            )) : (
+              <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center py-6">
+                <p className="text-sm">Belum ada data penjualan.</p>
+              </div>
+            )}
+          </div>
+        </div>
         {/* 2. GRAFIK PENDAPATAN (KIRI - Lebar) */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl border shadow-sm">
+        <div className="lg:col-span-2 bg-white p-6 rounded-xl border shadow-sm flex flex-col justify-center">
           <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-gray-400" /> Tren Pendapatan (7 Hari Terakhir)
           </h2>
@@ -219,7 +256,6 @@ export default function DashboardIndex({
             Lakukan Restok <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
-
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
