@@ -16,7 +16,7 @@ class PrescriptionController extends Controller
         $status = $request->input('status', 'pending');
 
         $prescriptions = Prescription::with(['patient', 'transaction.details.medicine'])
-        ->where('status', $status)
+            ->where('status', $status)
             ->latest()
             ->paginate(10)
             ->withQueryString();

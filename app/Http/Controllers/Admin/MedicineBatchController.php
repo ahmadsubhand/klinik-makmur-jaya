@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Medicine;
 use App\Models\MedicineBatch;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
@@ -32,7 +31,6 @@ class MedicineBatchController extends Controller
 
         return Inertia::render('admin/medicine-batches/index', [
             'batches' => $batches,
-            'medicines' => Medicine::select('id', 'name')->orderBy('name')->get(),
             'suppliers' => Supplier::select('id', 'name')->orderBy('name')->get(),
             'filters' => [
                 'search' => $search,

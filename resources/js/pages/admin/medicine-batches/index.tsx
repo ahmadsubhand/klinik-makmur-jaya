@@ -1,13 +1,23 @@
 import { Head, useForm, router } from '@inertiajs/react';
-import { Pencil, Trash2, Plus, Search, ArrowUpDown, PackageOpen, AlertCircle } from 'lucide-react';
+import axios from 'axios';
+import { clsx  } from 'clsx';
+import type {ClassValue} from 'clsx';
+import { Pencil, Trash2, Plus, Search, ArrowUpDown, PackageOpen, AlertCircle, Check, ChevronsUpDown, Loader2} from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { twMerge } from 'tailwind-merge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+// Jika Anda menggunakan utilitas `cn` dari shadcn (opsional, sesuaikan dengan file Anda)
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 interface Medicine { id: number; name: string; }
 interface Supplier { id: number; name: string; }
@@ -40,13 +50,9 @@ interface Filters {
 
 export default function MedicineBatchIndex({
   batches,
-  medicines,
-  suppliers,
   filters,
 }: {
   batches: PaginatedData;
-  medicines: Medicine[];
-  suppliers: Supplier[];
   filters: Filters;
 }) {
   const [searchTerm, setSearchTerm] = useState(filters?.search || '');
@@ -166,6 +172,54 @@ export default function MedicineBatchIndex({
     return { label: 'Aman', className: '' };
   };
 
+  // State untuk Async Combobox
+  const [openCombobox, setOpenCombobox] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [medicineOptions, setMedicineOptions] = useState<Medicine[]>([]);
+  const [isLoadingMedicines, setIsLoadingMedicines] = useState(false);
+
+  // Fetch data obat secara asinkron saat user mengetik
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      setIsLoadingMedicines(true);
+
+      try {
+        const res = await axios.get(`/api/medicines/search?q=${searchQuery}`);
+        setMedicineOptions(res.data);
+      } catch (error) {
+        console.error("Gagal mengambil data obat", error);
+      } finally {
+        setIsLoadingMedicines(false);
+      }
+    }, 300); // Debounce 300ms agar tidak spam API
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // State untuk Async Combobox Supplier
+  const [openSupplierCombobox, setOpenSupplierCombobox] = useState(false);
+  const [searchSupplierQuery, setSearchSupplierQuery] = useState('');
+  const [supplierOptions, setSupplierOptions] = useState<Supplier[]>([]);
+  const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(false);
+
+  // Fetch data supplier secara asinkron
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      setIsLoadingSuppliers(true);
+      
+      try {
+        const res = await axios.get(`/api/suppliers/search?q=${searchSupplierQuery}`);
+        setSupplierOptions(res.data);
+      } catch (error) {
+        console.error("Gagal mengambil data supplier", error);
+      } finally {
+        setIsLoadingSuppliers(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchSupplierQuery]);
+
   return (
     <div className="p-8 pb-20">
       <Head title="Riwayat Restok & Batch" />
@@ -184,7 +238,11 @@ export default function MedicineBatchIndex({
           setIsOpen(open);
           
           if (!open) { 
-            reset(); setEditingBatch(null); clearErrors(); 
+            reset(); 
+            setEditingBatch(null); 
+            clearErrors(); 
+            setSearchQuery('');
+            setSearchSupplierQuery('');
           } 
         }}>
           <DialogContent className="max-w-xl">
@@ -197,28 +255,161 @@ export default function MedicineBatchIndex({
                 
                 <div className="grid gap-2 col-span-2">
                   <Label htmlFor="medicine_id">Produk / Obat *</Label>
-                  <Select value={data.medicine_id} onValueChange={(val) => setData('medicine_id', val)} disabled={!!editingBatch}>
-                    <SelectTrigger><SelectValue placeholder="Pilih Obat yang Direstok" /></SelectTrigger>
-                    <SelectContent>
-                      {medicines.map((med) => (
-                        <SelectItem key={med.id} value={med.id.toString()}>{med.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  
+                  <Popover open={openCombobox && !editingBatch} onOpenChange={setOpenCombobox}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openCombobox}
+                        className={cn(
+                          "w-full justify-between font-normal",
+                          !data.medicine_id && "text-muted-foreground",
+                          !!editingBatch && "opacity-50 cursor-not-allowed"
+                        )}
+                        disabled={!!editingBatch}
+                      >
+                        {/* Tampilkan nama obat jika sedang diedit, atau cari di dalam array opsi jika baru dipilih */}
+                        {editingBatch 
+                          ? editingBatch.medicine.name 
+                          : data.medicine_id
+                            ? medicineOptions.find((med) => med.id.toString() === data.medicine_id.toString())?.name
+                            : "Cari Obat yang Direstok..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    
+                    <PopoverContent className="w-100 max-w-[90vw] p-0" align="start">
+                      {/* shouldFilter={false} PENTING: Agar filter dilakukan oleh backend, bukan oleh Command internal */}
+                      <Command shouldFilter={false}>
+                        <CommandInput 
+                          placeholder="Ketik nama obat..." 
+                          value={searchQuery}
+                          onValueChange={setSearchQuery}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            {isLoadingMedicines ? (
+                              <div className="flex items-center justify-center py-6 text-sm text-gray-500">
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Mencari data...
+                              </div>
+                            ) : (
+                              "Obat tidak ditemukan."
+                            )}
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {!isLoadingMedicines && medicineOptions.map((med) => (
+                              <CommandItem
+                                key={med.id}
+                                value={med.id.toString()}
+                                onSelect={(currentValue) => {
+                                  setData('medicine_id', currentValue);
+                                  setOpenCombobox(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    data.medicine_id === med.id.toString() ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {med.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   {errors.medicine_id && <span className="text-xs text-red-500">{errors.medicine_id}</span>}
                 </div>
 
                 <div className="grid gap-2">
                   <Label htmlFor="supplier_id">Supplier (Opsional)</Label>
-                  <Select value={data.supplier_id} onValueChange={(val) => setData('supplier_id', val)}>
-                    <SelectTrigger><SelectValue placeholder="Pilih Supplier" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">-- Tanpa Supplier --</SelectItem>
-                      {suppliers.map((sup) => (
-                        <SelectItem key={sup.id} value={sup.id.toString()}>{sup.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  
+                  <Popover open={openSupplierCombobox} onOpenChange={setOpenSupplierCombobox}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openSupplierCombobox}
+                        className={cn(
+                          "w-full justify-between font-normal",
+                          (!data.supplier_id || data.supplier_id === 'none') && "text-muted-foreground"
+                        )}
+                      >
+                        {/* Logika Tampilan Teks Tombol (Trigger) */}
+                        {data.supplier_id === 'none' || !data.supplier_id
+                          ? "-- Tanpa Supplier --"
+                          : editingBatch && data.supplier_id === editingBatch.supplier_id?.toString()
+                            ? editingBatch.supplier?.name // Munculkan nama supplier dari data awal saat sedang edit
+                            : supplierOptions.find((sup) => sup.id.toString() === data.supplier_id.toString())?.name || "Cari Supplier..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    
+                    <PopoverContent className="w-100 max-w-[90vw] p-0" align="start">
+                      <Command shouldFilter={false}>
+                        <CommandInput 
+                          placeholder="Ketik nama supplier..." 
+                          value={searchSupplierQuery}
+                          onValueChange={setSearchSupplierQuery}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            {isLoadingSuppliers ? (
+                              <div className="flex items-center justify-center py-6 text-sm text-gray-500">
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Mencari data...
+                              </div>
+                            ) : (
+                              "Supplier tidak ditemukan."
+                            )}
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {/* Selalu sediakan opsi statis untuk "Tanpa Supplier" di paling atas */}
+                            <CommandItem
+                              value="none"
+                              onSelect={(currentValue) => {
+                                setData('supplier_id', currentValue);
+                                setOpenSupplierCombobox(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  data.supplier_id === "none" ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              -- Tanpa Supplier --
+                            </CommandItem>
+
+                            {/* List hasil pencarian dari database */}
+                            {!isLoadingSuppliers && supplierOptions.map((sup) => (
+                              <CommandItem
+                                key={sup.id}
+                                value={sup.id.toString()}
+                                onSelect={(currentValue) => {
+                                  setData('supplier_id', currentValue);
+                                  setOpenSupplierCombobox(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    data.supplier_id === sup.id.toString() ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {sup.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {errors.supplier_id && <span className="text-xs text-red-500">{errors.supplier_id}</span>}
                 </div>
 
                 <div className="grid gap-2">

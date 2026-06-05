@@ -14,6 +14,9 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\UserOrderController;
+use App\Models\Medicine;
+use App\Models\Supplier;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -142,5 +145,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // UC3: KATALOG OBAT
 // ========================================================
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
+
+// ========================================================
+// UC3: API PENCARIAN
+// ========================================================
+Route::get('/api/medicines/search', function (Request $request) {
+    $search = $request->query('q');
+
+    return Medicine::when($search, function ($query) use ($search) {
+            $searchTerm = strtolower($search);
+            $query->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"]);
+        })
+        ->limit(20)
+        ->get(['id', 'name']);
+});
+
+Route::get('/api/suppliers/search', function (Request $request) {
+    $search = $request->query('q');
+
+    return Supplier::when($search, function ($query) use ($search) {
+            $searchTerm = strtolower($search);
+            $query->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"]);
+        })
+        ->limit(20)
+        ->get(['id', 'name']);
+});
 
 require __DIR__.'/settings.php';
