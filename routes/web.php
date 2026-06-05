@@ -10,7 +10,6 @@ use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SystemMonitorController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\PrescriptionController;
-use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ShopController;
@@ -55,16 +54,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // ========================================================
             // UC8: MEMANTAU SERVER & LOG
             // ========================================================
-            Route::get('/system-monitor', [SystemMonitorController::class, 'index'])->name('system.monitor');
+            Route::get('/system-monitor', [SystemMonitorController::class, 'index'])->name('system-monitor');
 
             // ========================================================
             // UC8: DASHBOARD REAL-TIME
             // ========================================================
             Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+            // ========================================================
+            // UC7: LAPORAN PDF LATAR BELAKANG
+            // ========================================================
+            Route::post('/dashboard/request-pdf', [DashboardController::class, 'requestPdf'])->name('request-pdf');
         });
 
 
         Route::middleware(['role:admin|pharmacist'])->group(function () {
+            // ========================================================
+            // UC7: MANAJEMEN OBAT DAN KATEGORI
+            // ========================================================
+            Route::post('/medicines/import-csv', [MedicineController::class, 'importCsv'])->name('import-csv');
+            Route::get('/medicines/template-csv', [MedicineController::class, 'downloadCsvTemplate'])->name('template-csv');
+            Route::get('/medicines/import-status/{batchId}', [MedicineController::class, 'importStatus'])->name('import-status');
+
             // ========================================================
             // UC2: MANAJEMEN OBAT DAN KATEGORI
             // ========================================================
@@ -85,14 +96,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // ========================================================
             Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
             Route::put('/prescriptions/{prescription}', [PrescriptionController::class, 'update'])->name('prescriptions.update');
-
-            // ========================================================
-            // UC7: IMPORT AND EXPORT DATA
-            // ========================================================
-            Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-            Route::post('/reports/request-pdf', [ReportController::class, 'requestPdf'])->name('reports.pdf');
-            Route::post('/reports/import-csv', [ReportController::class, 'importCsv'])->name('reports.csv');
-            Route::get('/reports/template-csv', [ReportController::class, 'downloadCsvTemplate'])->name('reports.template-csv');
         });
 
         // ========================================================

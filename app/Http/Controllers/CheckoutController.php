@@ -94,6 +94,7 @@ class CheckoutController extends Controller
                     // Ambil batch dari expired terdekat yang stoknya > 0
                     // Gunakan lockForUpdate agar tabel dikunci sementara jika ada transaksi berbarengan
                     $batches = MedicineBatch::where('medicine_id', $cart->medicine_id)
+                        ->where('expired_at', '>', now())
                         ->where('quantity_current', '>', 0)
                         ->orderBy('expired_at', 'asc')
                         ->lockForUpdate() 

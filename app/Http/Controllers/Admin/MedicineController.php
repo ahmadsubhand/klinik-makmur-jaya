@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ImportMedicineBatch;
 use App\Models\Category;
 use App\Models\Medicine;
 use App\Models\MedicineBatch;
 use App\Models\Supplier;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -146,5 +149,117 @@ class MedicineController extends Controller
         $medicine->delete();
 
         return redirect()->back()->with('success', 'Obat beserta riwayat stoknya berhasil dihapus.');
+    }
+
+    // Mengutus banyak pekerja untuk memecah CSV
+    public function importCsv(Request $request)
+    {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:10240', // Maks 10MB
+        ]);
+
+        try {
+            $path = $request->file('csv_file')->getRealPath();
+            $handle = fopen($path, 'r');
+            
+            // Ambil header untuk pemetaan array_combine nanti
+            $header = fgetcsv($handle);
+            
+            $chunkSize = 100;
+            $chunk = [];
+            $jobs = [];
+
+            while (($row = fgetcsv($handle)) !== false) {
+                // Abaikan baris kosong atau baris yang tidak sesuai dengan jumlah header
+                if (empty(array_filter($row)) || count($row) !== count($header)) {
+                    continue;
+                }
+
+                // Gabungkan header dengan data baris
+                $chunk[] = array_combine($header, $row);
+
+                if (count($chunk) === $chunkSize) {
+                    $jobs[] = new ImportMedicineBatch($chunk);
+                    $chunk = [];
+                }
+            }
+
+            if (count($chunk) > 0) {
+                $jobs[] = new ImportMedicineBatch($chunk);
+            }
+
+            fclose($handle);
+
+            if (empty($jobs)) {
+                return response()->json(['error' => 'File CSV tidak berisi data valid.'], 422);
+            }
+
+            // Jalankan Batching
+            $batch = Bus::batch($jobs)
+                ->name('Import Katalog Obat CSV: ' . now()->format('Y-m-d H:i:s'))
+                ->dispatch();
+
+            return response()->json([
+                'batch_id' => $batch->id,
+                'message' => 'File berhasil masuk antrean. Memproses di latar belakang...'
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Gagal membaca file: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Endpoint API untuk mengecek progress bar secara realtime
+     */
+    public function importStatus(string $batchId)
+    {
+        $batch = Bus::findBatch($batchId);
+        
+        if (!$batch) {
+            return response()->json(['progress' => 0, 'finished' => false]);
+        }
+
+        return response()->json([
+            'progress' => $batch->progress(),
+            'finished' => $batch->finished(),
+            'failed' => $batch->hasFailures(),
+            'total_jobs' => $batch->totalJobs,
+            'processed_jobs' => $batch->processedJobs(),
+        ]);
+    }
+
+    // Method untuk mendownload format template CSV
+    public function downloadCsvTemplate()
+    {
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=template_import_obat.csv",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        // Kolom header sesuai yang dibutuhkan oleh Job ImportMedicineBatch
+        $columns = ['name', 'category_name', 'type', 'price', 'min_stock', 'description'];
+
+        $callback = function () use ($columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+            
+            // (Opsional) Tambahkan satu baris dummy sebagai contoh cara pengisian bagi user
+            fputcsv($file, [
+                'Paracetamol 500mg', 
+                'Obat Bebas',
+                'over-the-counter', 
+                '5000', 
+                '10', 
+                'Obat penurun panas dan pereda nyeri ringan'
+            ]);
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

@@ -2,13 +2,15 @@
 
 namespace App\Jobs;
 
+use App\Models\Category;
 use App\Models\Medicine;
-use Illuminate\Bus\Batchable; // Wajib ditambahkan untuk proses batch
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 
 class ImportMedicineBatch implements ShouldQueue
 {
@@ -23,18 +25,47 @@ class ImportMedicineBatch implements ShouldQueue
 
     public function handle(): void
     {
-        // Proses paralel: Masukkan tiap baris CSV ke database
-        foreach ($this->dataChunk as $row) {
-            Medicine::updateOrCreate(
-                ['name' => $row['name']], // Jika nama obat sudah ada, update. Jika belum, buat baru.
-                [
-                    'category_id' => $row['category_id'],
-                    'type' => $row['type'],
-                    'price' => $row['price'],
-                    'min_stock' => $row['min_stock'],
-                    'description' => $row['description'] ?? null,
-                ]
-            );
+        // 1. Cek apakah user membatalkan proses batch
+        if ($this->batch() && $this->batch()->cancelled()) {
+            return;
+        }
+
+        // 2. Gunakan Transaction agar jika 1 chunk gagal, tidak ada data parsial yang tersimpan
+        DB::beginTransaction();
+
+        try {
+            foreach ($this->dataChunk as $row) {
+                // 1. Cari kategori berdasarkan nama (case-insensitive)
+                // Menggunakan firstOrCreate untuk memastikan kategori tersedia
+                $categoryName = trim($row['category_name']);
+                
+                $category = Category::whereRaw('LOWER(name) = ?', [strtolower($categoryName)])
+                                    ->first();
+
+                if (!$category) {
+                    $category = Category::create(['name' => $categoryName]);
+                }
+
+                // 2. Simpan obat dengan category_id yang baru saja ditemukan/dibuat
+                Medicine::updateOrCreate(
+                    ['name' => $row['name']], 
+                    [
+                        'category_id' => $category->id,
+                        'type'        => $row['type'],
+                        'price'       => $row['price'],
+                        'min_stock'   => $row['min_stock'],
+                        'description' => $row['description'] ?? null,
+                    ]
+                );
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            // 3. Lempar kembali error agar Laravel mencatatnya di 'failed_jobs'
+            // dan menandai batch ini sebagai gagal
+            throw $e;
         }
     }
 }

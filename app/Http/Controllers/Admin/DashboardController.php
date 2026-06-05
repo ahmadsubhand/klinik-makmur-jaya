@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\GenerateSalesReportPdf;
+use App\Models\ExportDocument;
 use App\Models\Medicine;
 use App\Models\Transaction;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -71,6 +74,23 @@ class DashboardController extends Controller
             ],
             'chartData' => $chartData,
             'criticalStocks' => $criticalStocks,
+            'exports' => ExportDocument::with('user')->latest()->get()
         ]);
+    }
+
+    public function requestPdf()
+    {
+        // 1. Catat ke tabel export_documents sesuai ERD
+        $export = ExportDocument::create([
+            'user_id' => Auth::id(),
+            'report_name' => 'Laporan Penjualan ' . now()->format('d M Y H:i'),
+            'type' => 'transaction',
+            'status' => 'pending',
+        ]);
+
+        // 2. Utus Job ke belakang layar
+        GenerateSalesReportPdf::dispatch($export->id);
+
+        return back()->with('success', 'Pembuatan PDF sedang diproses. Silakan pantau statusnya di tabel riwayat.');
     }
 }

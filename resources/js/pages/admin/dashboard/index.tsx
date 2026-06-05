@@ -5,7 +5,13 @@ import {
   AlertTriangle, 
   Wallet, 
   Calendar,
-  ArrowRight
+  ArrowRight,
+  FileText,
+  CheckCircle,
+  RefreshCw,
+  Clock,
+  XCircle,
+  Download
 } from 'lucide-react';
 import React from 'react';
 import { 
@@ -19,6 +25,7 @@ import {
 } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Stats {
   revenueToday: number;
@@ -40,14 +47,27 @@ interface CriticalStock {
   category: { name: string } | null;
 }
 
+interface ExportDoc {
+  id: number;
+  report_name: string;
+  type: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  file_path: string | null;
+  error_message: string | null;
+  created_at: string;
+  user: { name: string };
+}
+
 export default function DashboardIndex({
   stats,
   chartData,
   criticalStocks,
+  exports,
 }: {
   stats: Stats;
   chartData: ChartItem[];
   criticalStocks: CriticalStock[];
+  exports: ExportDoc[]
 }) {
 
   // Custom Tooltip untuk Grafik Recharts agar format uangnya Rupiah
@@ -65,6 +85,8 @@ export default function DashboardIndex({
 
     return null;
   };
+
+  const requestPdf = () => router.post('/admin/dashboard/request-pdf', {}, { preserveScroll: true });
 
   return (
     <div className="p-8 pb-20 bg-gray-50/50 min-h-screen">
@@ -118,7 +140,7 @@ export default function DashboardIndex({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         
         {/* 2. GRAFIK PENDAPATAN (KIRI - Lebar) */}
         <div className="lg:col-span-2 bg-white p-6 rounded-xl border shadow-sm">
@@ -198,6 +220,80 @@ export default function DashboardIndex({
           </Button>
         </div>
 
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        {/* TABEL HASIL GENERATE PDF */}
+        <div className="lg:col-span-2">
+          <h2 className="text-lg font-bold mb-4">Riwayat Export Dokumen</h2>
+          <div className="rounded-md border shadow-sm bg-white overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama Laporan</TableHead>
+                  <TableHead>Tipe</TableHead>
+                  <TableHead>Pemohon</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className='h-full'>
+                {exports.length > 0 ? exports.map((doc) => (
+                  <TableRow key={doc.id}>
+                    <TableCell>
+                      <p className="font-semibold">{doc.report_name}</p>
+                      <p className="text-xs text-gray-500">{new Date(doc.created_at).toLocaleString('id-ID')}</p>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="uppercase text-[10px]">{doc.type}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">{doc.user?.name}</TableCell>
+                    <TableCell>
+                      {doc.status === 'completed' && <Badge className="bg-emerald-100 text-emerald-800"><CheckCircle className="h-3 w-3 mr-1"/> Completed</Badge>}
+                      {doc.status === 'processing' && <Badge className="bg-blue-100 text-blue-800"><RefreshCw className="h-3 w-3 mr-1 animate-spin"/> Processing</Badge>}
+                      {doc.status === 'pending' && <Badge className="bg-amber-100 text-amber-800"><Clock className="h-3 w-3 mr-1"/> Pending</Badge>}
+                      {doc.status === 'failed' && (
+                        <div className="flex flex-col gap-1 items-start">
+                          <Badge className="bg-red-100 text-red-800"><XCircle className="h-3 w-3 mr-1"/> Failed</Badge>
+                          <span className="text-[10px] text-red-500 max-w-37.5 truncate" title={doc.error_message || ''}>
+                            {doc.error_message || 'Terjadi kesalahan sistem'}
+                          </span>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {doc.status === 'completed' ? (
+                        <a href={`/storage/${doc.file_path}`} target="_blank" rel="noreferrer">
+                          <Button variant="outline" size="sm" className="text-indigo-600 border-indigo-200">
+                            <Download className="h-4 w-4 mr-2" /> File PDF
+                          </Button>
+                        </a>
+                      ) : (
+                        <Button variant="ghost" size="sm" onClick={() => router.reload()}>
+                          <RefreshCw className="h-4 w-4" /> Refresh
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow><TableCell colSpan={5} className="text-center text-gray-500 py-8">Belum ada riwayat export dokumen.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+
+        {/* PANEL EXPORT PDF */}
+        <div className="bg-white p-6 rounded-xl border shadow-sm flex flex-col items-center text-center justify-center">
+          <div className="h-16 w-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+            <FileText className="h-8 w-8" />
+          </div>
+          <h2 className="text-xl font-bold mb-2">Export Laporan PDF</h2>
+          <p className="text-gray-500 text-sm mb-6">Sistem akan menyusun seluruh data transaksi menjadi dokumen PDF berlogo resmi. Proses ini berjalan di latar belakang.</p>
+          <Button onClick={requestPdf} className="w-full bg-indigo-600 hover:bg-indigo-700 h-12">
+            Mulai Ekstrak Laporan PDF
+          </Button>
+        </div>
       </div>
     </div>
   );

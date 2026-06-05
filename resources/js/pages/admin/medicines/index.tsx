@@ -28,6 +28,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import ImportCsv from '../../../components/import-csv';
 
 interface Category { id: number; name: string; }
 interface Supplier { id: number; name: string; }
@@ -210,6 +211,9 @@ export default function MedicineIndex({
     ? URL.createObjectURL(data.image) // Preview gambar yang baru dipilih
     : (editingMedicine?.image_url || null); // Preview gambar lama dari database
 
+  
+  const [isOpenCsv, setIsOpenCsv] = useState(false);
+
   return (
     <div className="p-8 pb-20">
       <Head title="Kelola Master Obat" />
@@ -219,9 +223,27 @@ export default function MedicineIndex({
           <h1 className="text-2xl font-bold">Master Obat & Alkes</h1>
           <p className="text-sm text-gray-500">Kelola katalog produk, harga, dan pengaturan stok dasar.</p>
         </div>
-        <Button onClick={openAddModal}>
-          <Plus className="mr-2 h-4 w-4" /> Tambah Obat
-        </Button>
+        <div className="flex gap-4">
+          <Button onClick={() => setIsOpenCsv(true)} className="bg-emerald-600 hover:bg-emerald-700">
+            <Plus className="mr-2 h-4 w-4" /> Tambah Obat dengan CSV
+          </Button>
+          <Button onClick={openAddModal}>
+            <Plus className="mr-2 h-4 w-4" /> Tambah Obat
+          </Button>
+        </div>
+
+        {/* MODAL UPLOAD */}
+        <Dialog open={isOpenCsv} onOpenChange={(open) => {
+          setIsOpenCsv(open);
+        }}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Tambah Obat dengan CSV</DialogTitle>
+            </DialogHeader>
+
+            <ImportCsv />
+          </DialogContent>
+        </Dialog>
 
         {/* MODAL (ADD / EDIT) */}
         <Dialog open={isOpen} onOpenChange={(open) => {
