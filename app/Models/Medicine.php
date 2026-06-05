@@ -32,6 +32,20 @@ class Medicine extends Model
     // Accessor: Menghitung sisa stok dari semua batch yang belum expired
     public function getTotalStockAttribute()
     {
+        // 1. Jika total_stock sudah ada hasil dari 'withSum' di SQL, langsung gunakan!
+        if (array_key_exists('total_stock', $this->attributes)) {
+            return (int) $this->attributes['total_stock'] ?? 0;
+        }
+
+        // 2. Jika tidak ada withSum (misal dipanggil di halaman lain), 
+        // gunakan Collection $this->batches (TANPA KURUNG agar tidak hit database lagi)
+        if ($this->relationLoaded('batches')) {
+            return $this->batches
+                ->where('expired_at', '>', now())
+                ->sum('quantity_current');
+        }
+
+        // 3. Fallback jika relasi belum di-load sama sekali (Hit Database)
         return $this->batches()
             ->where('expired_at', '>', now())
             ->sum('quantity_current');

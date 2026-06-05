@@ -421,7 +421,9 @@ export default function MedicineIndex({
               <TableHead onClick={() => handleSort('price')}>
                 <div className="flex items-center cursor-pointer hover:text-gray-700">Harga Jual <ArrowUpDown className="ml-2 h-3 w-3" /></div>
               </TableHead>
-              <TableHead className="text-right">Stok Gudang</TableHead>
+              <TableHead onClick={() => handleSort('total_stock')}>
+                <div className="flex items-center cursor-pointer hover:text-gray-700">Stok Gudang <ArrowUpDown className="ml-2 h-3 w-3" /></div>
+              </TableHead>
               <TableHead className="text-right w-25">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -458,7 +460,7 @@ export default function MedicineIndex({
                   </TableCell>
 
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2">
                       {isLowStock && <AlertTriangle className="h-4 w-4 text-amber-500" />}
                       <span className={`font-semibold ${isLowStock ? 'text-amber-600' : 'text-emerald-600'}`}>
                         {med.total_stock} Unit

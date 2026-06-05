@@ -26,6 +26,9 @@ class MedicineController extends Controller
         $sortDir = $request->input('sort_direction', 'desc');
 
         $medicines = Medicine::with(['category', 'batches'])
+            ->withSum(['batches as total_stock' => function ($query) {
+                $query->where('expired_at', '>', now());
+            }], 'quantity_current')
             ->when($search, function ($query, $search) {
                 $searchTerm = strtolower($search);
                 $query->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"]);
@@ -33,11 +36,19 @@ class MedicineController extends Controller
             ->when($categoryId, function ($query, $categoryId) {
                 $query->where('category_id', $categoryId);
             })
-            ->orderBy($sortField, $sortDir)
+            ->when($sortField === 'total_stock', function ($query) use ($sortDir) {
+                // Tentukan posisi NULL berdasarkan arah sorting
+                $nullPosition = strtolower($sortDir) === 'asc' ? 'NULLS FIRST' : 'NULLS LAST';
+                
+                // Gunakan alias langsung tanpa COALESCE, tapi tambahkan aturan posisi NULL
+                $query->orderByRaw("total_stock {$sortDir} {$nullPosition}");
+            }, function ($query) use ($sortField, $sortDir) {
+                // Jika sort by kolom fisik (bukan alias)
+                $query->orderBy($sortField, $sortDir);
+            })
             ->paginate(10)
             ->withQueryString();
 
-        // Kirim data Kategori dan Supplier untuk Dropdown di Form
         $categories = Category::select('id', 'name')->orderBy('name')->get();
         $suppliers = Supplier::select('id', 'name')->orderBy('name')->get();
 

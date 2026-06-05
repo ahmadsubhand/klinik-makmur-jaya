@@ -81,8 +81,8 @@ class CheckoutController extends Controller
                     'prescription_id' => $prescriptionId,
                     'type' => 'online',
                     'total_price' => $totalPrice,
-                    // Jika butuh resep, statusnya pending. Jika tidak, langsung confirmed/processing
-                    'status' => $requiresPrescription ? 'pending' : 'confirmed', 
+                    // Jika butuh resep, statusnya pending. Jika tidak, langsung processing
+                    'status' => $requiresPrescription ? 'pending' : 'processing', 
                     'payment_method' => $validated['payment_method'],
                 ]);
 
