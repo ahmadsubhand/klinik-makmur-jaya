@@ -72,6 +72,7 @@ class MasterDataSeeder extends Seeder
                 'type' => $medData['type'],
                 'price' => $medData['price'],
                 'min_stock' => $medData['min'],
+                'image_path' => 'medicines/obat.png'
             ]);
         }
         $this->command->info('--- 15 Jenis Obat beragam berhasil dibuat.');

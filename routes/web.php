@@ -71,7 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
 
 
-        Route::middleware(['role:admin|pharmacist'])->group(function () {
+        Route::middleware(['role:pharmacist'])->group(function () {
             // ========================================================
             // UC7: MANAJEMEN OBAT DAN KATEGORI
             // ========================================================

@@ -80,7 +80,7 @@ export default function MyOrders({ orders }: { orders: { data: Order[]; links: a
                   <div className="flex gap-2 w-full md:w-auto">
                     <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
                       {/* TOMBOL UPLOAD BUKTI BAYAR */}
-                      {order.payment_status === 'unpaid' && order.status !== 'cancelled' && (
+                      {order.status !==  'pending' && order.payment_status === 'unpaid' && order.status !== 'cancelled' && (
                         <div>
                           <Input 
                             type="file" 

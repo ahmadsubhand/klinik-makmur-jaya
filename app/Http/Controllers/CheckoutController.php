@@ -155,7 +155,7 @@ class CheckoutController extends Controller
                 $pharmacist->notify(new NewOrderNotification($transaction->id, $title, $message, $level));
             }
 
-            return redirect()->route('shop.index')->with('success', 'Pesanan berhasil dibuat! Silakan tunggu konfirmasi.');
+            return redirect()->route('user.orders.index')->with('success', 'Pesanan berhasil dibuat! Silakan tunggu konfirmasi.');
 
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());

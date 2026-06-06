@@ -47,6 +47,10 @@ class UserOrderController extends Controller
             abort(403);
         }
 
+        if ($order->status === 'pending' || $order->status === 'canceled') {
+            return back()->with('error', 'Pembayaran hanya boleh dilakukan setelah apoteker menyetujui resep');
+        }
+
         $request->validate([
             'payment_proof' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ], [

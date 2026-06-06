@@ -64,7 +64,7 @@ class TransactionSeeder extends Seeder
                     'patient_id' => $patient->id,
                     'pharmacist_id' => ($presStatus !== 'pending') ? $pharmacist->id : null,
                     // Buat file dummy di storage (anggap saja gambar resep)
-                    'prescription_path' => 'prescriptions/dummy_resep_' . rand(1000,9999) . '.jpg',
+                    'prescription_path' => 'prescriptions/resep.jpg',
                     'status' => $presStatus,
                     'notes' => ($presStatus === 'rejected') ? 'Resep sudah melewati batas waktu/kadaluarsa' : null,
                     'created_at' => $txDate,
@@ -91,7 +91,7 @@ class TransactionSeeder extends Seeder
                 
                 $payMethod = $faker->randomElement(['transfer_bank', 'qris', 'ewallet']);
                 // Generate Bukti Bayar palsu jika sudah upload
-                $payProof = in_array($payStatus, ['pending_verification', 'paid']) ? 'payments/dummy_struk_' . rand(1000,9999) . '.jpg' : null;
+                $payProof = in_array($payStatus, ['pending_verification', 'paid']) ? 'payments/payment.jpg' : null;
             } else {
                 // Offline POS
                 $status = 'completed';

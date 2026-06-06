@@ -19,7 +19,7 @@ class CheckPharmacyAlerts extends Command
         $this->info('Memulai pengecekan alert apotek...');
 
         // Ambil semua user dengan role admin/apoteker untuk dikirim notifikasi
-        $admins = User::role(['admin', 'pharmacist'])->get();
+        $admins = User::role(['pharmacist'])->get();
 
         // CEK OBAT MENDEKATI EXPIRED DATE (90, 60, 30 HARI)
         $today = Carbon::today();

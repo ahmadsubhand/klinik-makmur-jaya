@@ -193,7 +193,6 @@ flowchart LR
 
     %% Relasi Aktor Manusia ke Use Case
     Admin ---> UC1
-    Admin ---> UC2
     Admin ---> UC7
     Admin ---> UC9
     Admin ---> UC6
@@ -201,7 +200,6 @@ flowchart LR
     Apoteker ---> UC1
     Apoteker ---> UC2
     Apoteker ---> UC4
-    Apoteker ---> UC6
     Apoteker ---> UC8
 
     Kasir ---> UC1
@@ -475,13 +473,56 @@ Domain ini melacak proses pembuatan dokumen laporan secara asinkron.
 
 ---
 
-# 4. UM (User Manual)
+# 4. UAT (User Acceptance Testing)
 
-## 3.3 Kebutuhan Migrasi dan Pembaharuan Sistem
+## 1. Skenario Pengujian Pasien / Pelanggan
 
-### a. Simulasi Migrasi dari Sistem Manual ke Sistem E-Commerce
+Fokus pengujian ini adalah untuk memastikan alur registrasi, pencarian obat, dan transaksi pembelian secara daring berjalan dengan lancar.
 
-#### Strategi Migrasi Data
+| ID Test | Skenario Pengujian | Langkah-Langkah | Ekspektasi Hasil | Status (Pass/Fail) |
+|----------|-------------------|----------------|------------------|-------------------|
+| UAT-P01 | Registrasi Akun Baru | 1. Akses halaman beranda dan klik "Daftar Sekarang".<br>2. Masukkan nama, email, nomor telepon, dan kata sandi.<br>3. Klik "Buat Akun Pasien". | Akun berhasil dibuat dan sistem mengirimkan verifikasi email ke pengguna. | [ ] |
+| UAT-P02 | Pencarian Katalog Obat | 1. Ketik nama obat pada bilah pencarian.<br>2. Gunakan filter kategori (contoh: Suplemen & Vitamin). | Sistem menampilkan hasil pencarian dengan fitur autocomplete dan fuzzy search secara responsif. | [ ] |
+| UAT-P03 | Checkout Obat Bebas | 1. Klik "Tambah ke Keranjang" pada obat bebas.<br>2. Buka keranjang dan klik "Lanjut ke Checkout".<br>3. Pilih metode pembayaran dan selesaikan pesanan. | Pesanan terbuat tanpa meminta unggahan resep, dan status pesanan menunggu pembayaran. | [ ] |
+| UAT-P04 | Checkout Obat Resep | 1. Tambahkan obat dengan label "Wajib Resep" ke keranjang.<br>2. Lakukan checkout pesanan. | Sistem secara ketat menahan proses checkout dan mewajibkan pengguna mengunggah dokumen resep dokter (JPG/PNG). | [ ] |
+| UAT-P05 | Pembatalan Pesanan Otomatis | 1. Buat pesanan baru.<br>2. Biarkan pesanan tanpa pembayaran selama lebih dari 24 jam. | Sistem membatalkan pesanan secara otomatis setelah melewati batas waktu pembayaran 24 jam. | [ ] |
+
+## 2. Skenario Pengujian Apoteker
+
+Fokus pengujian ini adalah manajemen inventaris, pengaturan katalog, dan kepatuhan dispensing obat dengan resep.
+
+| ID Test | Skenario Pengujian | Langkah-Langkah | Ekspektasi Hasil | Status (Pass/Fail) |
+|----------|-------------------|----------------|------------------|-------------------|
+| UAT-A01 | Mengelola Master Obat | 1. Login sebagai Apoteker.<br>2. Tambah data obat baru beserta harga, komposisi, efek samping, dan batas minimum stok.<br>3. Unggah gambar obat. | Data obat, termasuk gambar dan rincian medis, berhasil tersimpan melalui fungsi CRUD dan tampil di katalog publik. | [ ] |
+| UAT-A02 | Verifikasi Resep Dokter | 1. Buka daftar pesanan berstatus "Pending" yang membutuhkan resep.<br>2. Buka dan evaluasi keabsahan dokumen resep yang diunggah pasien.<br>3. Setujui (Approve) pesanan. | Status pesanan berubah dan siap diproses ke tahap selanjutnya, serta stok siap dipotong. | [ ] |
+| UAT-A03 | Notifikasi Stok Minimum | 1. Lakukan transaksi hingga stok obat A berada di bawah minimum threshold.<br>2. Cek dashboard atau email notifikasi. | Sistem mengirimkan peringatan otomatis (in-app atau email) kepada Apoteker bahwa stok mencapai batas minimum. | [ ] |
+| UAT-A04 | Peringatan Kadaluarsa | 1. Tambahkan data batch obat dengan expired date dalam 30, 60, atau 90 hari ke depan.<br>2. Cek notifikasi sistem. | Sistem memancarkan siaran alert peringatan sisa waktu kadaluarsa secara otomatis. | [ ] |
+
+## 3. Skenario Pengujian Kasir
+
+Pengujian ini memastikan bahwa sistem kasir offline terintegrasi penuh dengan persediaan online.
+
+| ID Test | Skenario Pengujian | Langkah-Langkah | Ekspektasi Hasil | Status (Pass/Fail) |
+|----------|-------------------|----------------|------------------|-------------------|
+| UAT-K01 | Transaksi Offline Counter | 1. Login sebagai Kasir.<br>2. Input pesanan pasien walk-in di konter.<br>3. Proses pembayaran dan selesaikan transaksi. | Transaksi berhasil dicatat dan memotong stok global secara real-time dengan algoritma FIFO. | [ ] |
+| UAT-K02 | Sinkronisasi Stok | 1. Buka halaman produk A di perangkat Pasien.<br>2. Lakukan penjualan produk A via Kasir (offline).<br>3. Refresh halaman produk A di perangkat Pasien. | Ketersediaan stok produk A di aplikasi Pasien langsung berkurang dan tersinkronisasi tepat setelah transaksi Kasir selesai. | [ ] |
+
+## 4. Skenario Pengujian Admin
+
+Pengujian ini berfokus pada manajemen infrastruktur sistem, pelaporan berskala besar, dan keamanan.
+
+| ID Test | Skenario Pengujian | Langkah-Langkah | Ekspektasi Hasil | Status (Pass/Fail) |
+|----------|-------------------|----------------|------------------|-------------------|
+| UAT-AD01 | Keamanan Login Multi-Level | 1. Coba login menggunakan password yang salah.<br>2. Coba akses rute (URL) Apoteker menggunakan akun Pasien. | Sistem menolak login yang salah dan sistem RBAC memblokir akses yang tidak sesuai dengan peran pengguna. | [ ] |
+| UAT-AD02 | Export Laporan Penjualan (PDF) | 1. Akses dashboard pelaporan.<br>2. Pilih rentang waktu data penjualan (bulanan).<br>3. Klik Export PDF. | Proses generate PDF berlogo klinik berjalan di latar belakang (background job) tanpa membekukan halaman (no UI freeze). | [ ] |
+| UAT-AD03 | Import Katalog CSV (Paralel) | 1. Siapkan file CSV berisi ribuan data obat sesuai template.<br>2. Unggah file melalui fitur Batch Import. | Sistem menyerap ribuan baris data secara paralel tanpa hambatan dan status import dapat dipantau. | [ ] |
+| UAT-AD04 | Pemantauan Audit Log | 1. Akses menu Monitor Audit Log & Error.<br>2. Cari aktivitas penambahan obat atau transaksi yang baru saja dilakukan. | Sistem mencatat histori aktivitas pengguna dengan detail siapa yang melakukan, waktu kejadian, dan apa yang diubah. | [ ] |
+
+# 5. UM (User Manual)
+
+## a. Simulasi Migrasi dari Sistem Manual ke Sistem E-Commerce
+
+### Strategi Migrasi Data
 
 Migrasi dilakukan dari sistem pencatatan manual atau spreadsheet menuju sistem e-commerce berbasis Laravel. Fokus migrasi tahap awal adalah data master obat karena data tersebut menjadi fondasi seluruh transaksi dan manajemen stok.
 
@@ -493,7 +534,7 @@ Proses migrasi dilakukan dengan pendekatan berikut:
 4. Import data melalui fitur impor katalog obat.
 5. Validasi hasil migrasi oleh admin dan apoteker.
 
-#### Mapping Field
+### Mapping Field
 
 | Spreadsheet Lama     | Sistem Baru   | Keterangan                                                 |
 | -------------------- | ------------- | ---------------------------------------------------------- |
@@ -507,14 +548,14 @@ Proses migrasi dilakukan dengan pendekatan berikut:
 | Dosis / Aturan Pakai | dosage        | Takaran dan panduan penggunaan (opsional)                  |
 | Efek Samping         | side_effects  | Risiko atau efek samping setelah penggunaan (opsional)     |
 
-#### Contoh Template CSV
+### Contoh Template CSV
 
 ```csv
 name,category_name,type,price,min_stock,description,composition,dosage,side_effects
 Paracetamol 500mg,Obat Bebas,over-the-counter,5000,10,Obat penurun panas dan pereda nyeri ringan,Paracetamol 500mg,3 x sehari 1 tablet,Dapat menyebabkan kantuk
 ```
 
-#### Validasi Data Pasca Migrasi
+### Validasi Data Pasca Migrasi
 
 Setelah proses impor selesai dilakukan, validasi dilakukan melalui langkah berikut:
 
@@ -524,7 +565,7 @@ Setelah proses impor selesai dilakukan, validasi dilakukan melalui langkah berik
 4. Melakukan pengecekan acak (sampling) terhadap beberapa data obat.
 5. Memastikan tidak terdapat data duplikat atau data gagal impor.
 
-#### Rollback Plan
+### Rollback Plan
 
 Apabila ditemukan kesalahan migrasi yang signifikan, proses rollback dilakukan dengan langkah berikut:
 
@@ -536,9 +577,9 @@ Apabila ditemukan kesalahan migrasi yang signifikan, proses rollback dilakukan d
 
 ---
 
-### b. Dokumen Cutover Plan
+## b. Dokumen Cutover Plan
 
-#### Timeline Cutover
+### Timeline Cutover
 
 | Waktu  | Aktivitas                                |
 | ------ | ---------------------------------------- |
@@ -550,7 +591,7 @@ Apabila ditemukan kesalahan migrasi yang signifikan, proses rollback dilakukan d
 | H+1    | Verifikasi pasca-cutover                 |
 | H+7    | Monitoring stabilitas sistem             |
 
-#### Checklist Pra-Cutover
+### Checklist Pra-Cutover
 
 * [ ] Backup seluruh data spreadsheet.
 * [ ] Backup database aplikasi.
@@ -560,7 +601,7 @@ Apabila ditemukan kesalahan migrasi yang signifikan, proses rollback dilakukan d
 * [ ] Verifikasi fitur impor data berfungsi.
 * [ ] Menyiapkan rollback plan.
 
-#### Langkah Cutover
+### Langkah Cutover
 
 1. Menghentikan sementara perubahan data pada sistem lama.
 2. Melakukan ekspor data spreadsheet.
@@ -570,7 +611,7 @@ Apabila ditemukan kesalahan migrasi yang signifikan, proses rollback dilakukan d
 6. Memverifikasi hasil impor.
 7. Mengaktifkan sistem e-commerce sebagai sistem utama.
 
-#### Verifikasi Pasca-Cutover
+### Verifikasi Pasca-Cutover
 
 * Jumlah data obat sesuai dengan sumber.
 * Seluruh kategori berhasil dibuat.
@@ -581,13 +622,13 @@ Apabila ditemukan kesalahan migrasi yang signifikan, proses rollback dilakukan d
 
 ---
 
-### c. Simulasi Pembaharuan (Update) Perangkat Lunak
+## c. Simulasi Pembaharuan (Update) Perangkat Lunak
 
-#### Skenario
+### Skenario
 
 Sistem akan ditambahkan fitur "Notifikasi Stok Minimum" tanpa mengganggu fitur transaksi yang telah berjalan.
 
-#### Tahapan Pembaharuan
+### Tahapan Pembaharuan
 
 1. Membuat branch baru pada Git.
 
@@ -612,7 +653,7 @@ git merge feature/low-stock-notification
 
 7. Melakukan monitoring pasca deployment.
 
-#### Strategi Meminimalkan Gangguan
+### Strategi Meminimalkan Gangguan
 
 * Pengembangan dilakukan pada branch terpisah.
 * Pengujian dilakukan pada lingkungan staging.
@@ -622,13 +663,13 @@ git merge feature/low-stock-notification
 
 ---
 
-### d. Analisis Dampak Perubahan (Impact Analysis)
+## d. Analisis Dampak Perubahan (Impact Analysis)
 
-#### Perubahan Fitur
+### Perubahan Fitur
 
 Penambahan fitur notifikasi stok minimum.
 
-#### Modul yang Terdampak
+### Modul yang Terdampak
 
 | Modul            | Dampak                                    |
 | ---------------- | ----------------------------------------- |
@@ -638,7 +679,7 @@ Penambahan fitur notifikasi stok minimum.
 | Dashboard Admin  | Menampilkan peringatan stok minimum       |
 | Queue Jobs       | Mengirim notifikasi secara asinkron       |
 
-#### Analisis Risiko
+### Analisis Risiko
 
 | Risiko                                  | Mitigasi                                                 |
 | --------------------------------------- | -------------------------------------------------------- |
@@ -647,7 +688,7 @@ Penambahan fitur notifikasi stok minimum.
 | Kesalahan perhitungan stok              | Melakukan pengujian pada berbagai skenario transaksi     |
 | Gangguan pada proses transaksi          | Memisahkan logika notifikasi dari logika transaksi utama |
 
-#### Kesimpulan
+### Kesimpulan
 
 Perubahan fitur notifikasi stok minimum memiliki dampak rendah terhadap modul transaksi karena implementasinya dilakukan secara terpisah melalui mekanisme scheduler dan notifikasi database Laravel. Dengan penggunaan Git, code review, pengujian staging, serta backup sebelum deployment, pembaharuan dapat dilakukan tanpa mengganggu operasional sistem yang sedang berjalan.
 
@@ -655,9 +696,9 @@ Perubahan fitur notifikasi stok minimum memiliki dampak rendah terhadap modul tr
 
 ## 3.4 Dokumentasi Teknis dan Panduan Pengguna
 
-### a. Panduan Pengguna (User Guide)
+## a. Panduan Pengguna (User Guide)
 
-#### 1. Pendaftaran dan Akses Akun
+### 1. Pendaftaran dan Akses Akun
 
 1. **Mendaftar Akun Baru**: Klik tombol "Daftar Sekarang" di sudut kanan atas halaman beranda. Masukkan nama lengkap, email aktif, nomor telepon, dan kata sandi. Klik "Buat Akun Pesien".
 
@@ -665,7 +706,7 @@ Perubahan fitur notifikasi stok minimum memiliki dampak rendah terhadap modul tr
 
 3. **Lupa Kata Sandi**: Pada halaman masuk, klik tautan "Lupa kata sandi?". Masukkan email Anda, dan sistem akan mengirimkan tautan untuk mengatur ulang kata sandi.
 
-#### 2. Pencarian dan Navigasi Katalog Obat
+### 2. Pencarian dan Navigasi Katalog Obat
 
 1. **Halaman Katalog**: Klik tombol "Katalog Obat" di tengah atas halaman beranda.
 
@@ -675,7 +716,7 @@ Perubahan fitur notifikasi stok minimum memiliki dampak rendah terhadap modul tr
 
 3. **Melihat Detail Obat**: Klik "Lihat Detail" pada di bawah gambar obat untuk melihat informasi lengkap seperti harga, deskripsi, komposisi, dosis, efek samping. 
 
-#### 3. Cara Melakukan Pembelian Obat (Transaksi Online)
+### 3. Cara Melakukan Pembelian Obat (Transaksi Online)
 
 1. **Pilih Produk**: Pada halaman katalog, klik tombol "Tambah ke Keranjang". Anda bisa melakukan hal yang sama jika ada obat lain yang ingin dibeli lagi.
 
@@ -697,7 +738,7 @@ Perubahan fitur notifikasi stok minimum memiliki dampak rendah terhadap modul tr
 
 10. **Terima Pesanan**: Saat status "Sedang Dikirim", Anda dapat menekan tombol "Pesanan Diterima" untuk konfirmasi bahwa pesanan telah sampai sehingga proses pembelian obat telah selesai.
 
-### b. Frequently Asked Questions (FAQ)
+## b. Frequently Asked Questions (FAQ)
 
 1. Bagaimana cara mengetahui stok obat masih tersedia?
 Stok obat selalu diperbarui secara real-time. Jika tombol "Tambah ke Keranjang" bisa diklik, berarti stok tersedia. Jika stok habis, sistem akan menampilkan pesan peringatan di sudut kanan atas.
@@ -729,7 +770,7 @@ Sistem kami menggunakan enkripsi dan berjalan pada jaringan aman (HTTPS). File r
 10. Apa yang harus dilakukan jika menerima barang yang salah atau rusak?
 Harap rekam video unboxing (buka paket) dan hubungi layanan pelanggan kami dalam waktu 2x24 jam sejak paket berstatus diterima. Kami akan memproses retur atau pengiriman ulang sesuai kebijakan klinik
 
-### c. Panduan Pemecahan Masalah (Troubleshooting Guide)
+## c. Panduan Pemecahan Masalah (Troubleshooting Guide)
 
 | Kendala / Masalah | Kemungkinan Penyebab | Solusi & Langkah Perbaikan |
 |-------------------|----------------------|----------------------------|

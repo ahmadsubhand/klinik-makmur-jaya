@@ -114,7 +114,6 @@ flowchart LR
 
     %% Relasi Aktor Manusia ke Use Case
     Admin ---> UC1
-    Admin ---> UC2
     Admin ---> UC7
     Admin ---> UC9
     Admin ---> UC6
@@ -122,7 +121,6 @@ flowchart LR
     Apoteker ---> UC1
     Apoteker ---> UC2
     Apoteker ---> UC4
-    Apoteker ---> UC6
     Apoteker ---> UC8
 
     Kasir ---> UC1
